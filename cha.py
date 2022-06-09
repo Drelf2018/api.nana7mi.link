@@ -15,6 +15,7 @@ from pywebio.session import eval_js, run_async, run_js
 from uvicorn import Config, Server
 
 from adapter import Adapter
+from notice import notice
 from database import danmuDB, liveDB
 from WebHandler import LinkedList, get_default_handler
 
@@ -138,6 +139,7 @@ async def index():
             put_markdown('#### <font color="red">我要陪你成为最强直播员</font>'),
             put_image(forever, format='png'),
         ]},
+        {'title': '公告', 'content': notice()},
         {'title': '查询', 'content': [
             put_image(esu, format='png', width='100%'),
             put_markdown('---'),
