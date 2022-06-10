@@ -107,25 +107,31 @@ async def index():
         def t2s(timenum, format='%H:%M:%S'):
             return time.strftime(format, time.localtime(timenum))
 
+        clear('query_scope')
+
+        first = True
         danmaku = js['danmaku']
         for dm in danmaku:
             if not dm['room_info']:
-                put_markdown(f'{t2s(dm["time"])} [{dm["room"]}] <a href="https://space.bilibili.com/{uid}">{dm["username"]}</a>: {dm["msg"]}', scope='query_scope')
+                put_markdown(f'{t2s(dm["time"])} [{dm["room"]}] <a href="https://space.bilibili.com/{uid}">{dm["username"]}</a> {dm["msg"]}', scope='query_scope')
             else:
                 room_info = dm['room_info']
                 danmaku2 = dm['danmaku']
                 r = requests.get(room_info['cover'])
-                put_markdown('---', scope='query_scope')
+                if not first:
+                    put_markdown('---', scope='query_scope')
                 put_row([
-                    put_image(r.content, format='png'),
+                    put_image(notice.circle_corner(r.content), format='png'),
+                    None,
                     put_column([
                         put_markdown('### {username}【{title}】'.format_map(room_info)),
-                        put_text(f'开始 {t2s(room_info["st"], "%Y-%m-%d %H:%M:%S")} 结束 {t2s(room_info["sp"], "%Y-%m-%d %H:%M:%S")}')
+                        put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y-%m-%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y-%m-%d %H:%M:%S")}__')
                     ])
-                ], size='1fr 3fr', scope='query_scope')
+                ], size='10fr 1fr 30fr', scope='query_scope')
                 for dm2 in danmaku2:
-                    put_markdown(f'{t2s(dm2["time"])} <a href="https://space.bilibili.com/{uid}">{dm2["username"]}</a>: {dm2["msg"]}', scope='query_scope')
+                    put_markdown(f'{t2s(dm2["time"])} <a href="https://space.bilibili.com/{uid}">{dm2["username"]}</a> {dm2["msg"]}', scope='query_scope')
                 put_markdown('---', scope='query_scope')
+            first = False
 
     put_markdown('# 😎个人用弹幕记录站 / api.nana7mi.link')
     put_tabs([
@@ -143,7 +149,8 @@ async def index():
         {'title': '查询', 'content': [
             put_image(esu, format='png', width='100%'),
             put_markdown('---'),
-            put_button('😋查', onclick=onclick)
+            put_button('😋查', onclick=onclick),
+            put_markdown('*<font color="grey">请在“结果”标签页查看查询信息</color>*')
         ]},
         {'title': '结果', 'content': put_scope('query_scope')}
     ]).style('border:none;')  # 取消 put_tabs 的边框

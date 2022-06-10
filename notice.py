@@ -1,15 +1,18 @@
 from pywebio.output import *
 from PIL import Image, ImageDraw
 import os
+from io import BytesIO
 
 
-def circle_corner(img, radii=0):  # 把原图片变成圆角，这个函数是从网上找的
+def circle_corner(img: Image.Image, radii=0):  # 把原图片变成圆角，这个函数是从网上找的
     """
     圆角处理
     :param img: 源图象。
     :param radii: 半径，如：30。
     :return: 返回一个圆角处理后的图象。
     """
+    if not isinstance(img, Image.Image):
+        img = Image.open(BytesIO(img))
     if radii == 0:
         radii = int(0.1*img.height)
     else:

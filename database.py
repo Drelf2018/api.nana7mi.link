@@ -41,7 +41,6 @@ class DataBase:
         sql = f'SELECT {cmd} FROM {self.table}'
         if kwargs:
             sql += ' WHERE ' + ' AND '.join([f"{k}='{v}'" for k, v in kwargs.items()])
-        print(sql)
         if all:
             resp = conn.execute(sql).fetchall()
         else:
