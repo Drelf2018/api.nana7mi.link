@@ -1,3 +1,4 @@
+import time
 import sqlite3
 
 
@@ -76,9 +77,15 @@ class DanmuDB(DataBase):
         conn.executemany(sql, data)
         self.save()
     
-    def query_room(self, roomid: int, start_time: int, stop_time: int):
+    def query_room(self, roomid: int, start_time: int, stop_time: int = 0):
+        flag = False
+        if not stop_time:
+            stop_time = time.time()
+            flag = True
         sql = f'SELECT TIME,USERNAME,UID,MSG FROM DANMU WHERE ROOM = {roomid} AND TIME >= {start_time} AND TIME <= {stop_time}'
         dms = conn.execute(sql).fetchall()
+        if flag:
+            dms = dms[::-1]
         return [{'time': dm[0], 'username': dm[1], 'uid': dm[2], 'msg': dm[3]} for dm in dms]
 
 

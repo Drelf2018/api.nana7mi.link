@@ -1,5 +1,6 @@
 ﻿import asyncio
 import os
+import random
 import time
 from functools import partial
 from logging import INFO, Logger
@@ -97,6 +98,8 @@ async def index():
     # 按钮点击事件
     async def onclick(btn):
         def t2s(timenum, format='%H:%M:%S'):
+            if not timenum:
+                return '直播中'
             return time.strftime(format, time.localtime(timenum))
 
         def put_live(room_info):
@@ -149,13 +152,16 @@ async def index():
             lives = liveDB.query(room_id=roomid, all=True)
             if lives:
                 for live in lives[::-1]:
-                    if not live['sp']:
-                        live['sp'] = time.time()
                     danmaku = danmuDB.query_room(roomid, live['st'], live['sp'])
                     put_danmaku(live, danmaku, scope=None)
 
 
-    put_markdown('# 😎个人用弹幕记录站 / api.nana7mi.link')
+    quotation = [
+        '你们会无缘无故的说好用，就会无缘无故的骂难用',
+        '哈咯哈咯，听得到吗'
+    ]
+
+    put_markdown(f'# 😎 api.nana7mi.link <font color="grey" size=4>*{random.choice(quotation)}*</font>')
     put_tabs([
         {'title': '终端', 'content': put_scrollable(put_scope('background'), height=510, keep_bottom=True)},
         {'title': '源码', 'content': code()},
