@@ -100,7 +100,10 @@ async def index():
             return time.strftime(format, time.localtime(timenum))
 
         def put_live(room_info):
-            r = requests.get(room_info['cover'])
+            try:
+                r = requests.get(room_info['cover'])
+            except Exception as e:
+                toast(f'又是这里报错？ Exception: {e}', 0, color='error')
             put_row([
                 put_image(notice.circle_corner(r.content), format='png'),
                 None,
@@ -143,11 +146,13 @@ async def index():
                 first = False
         elif btn == '🍜查直播':
             roomid = await eval_js('prompt("输入查询直播间号")')
-            for live in liveDB.query(room_id=roomid, all=True):
-                if not live['sp']:
-                    live['sp'] = time.time()
-                danmaku = danmuDB.query_room(roomid, live['st'], live['sp'])
-                put_danmaku(live, danmaku, scope=None)
+            lives = liveDB.query(room_id=roomid, all=True)
+            if lives:
+                for live in lives[::-1]:
+                    if not live['sp']:
+                        live['sp'] = time.time()
+                    danmaku = danmuDB.query_room(roomid, live['st'], live['sp'])
+                    put_danmaku(live, danmaku, scope=None)
 
 
     put_markdown('# 😎个人用弹幕记录站 / api.nana7mi.link')
