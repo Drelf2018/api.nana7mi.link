@@ -83,7 +83,16 @@ class Adapter:
                     liveDB.update(roomid, st, round(time.time()))
                     logger.info(f'直播间 `{roomid}` 下播了')
             else:
+                '''
+                + SEND_GIFT: 礼物
+                + COMBO_SEND：礼物连击
+                + GUARD_BUY：续费大航海
+                + SUPER_CHAT_MESSAGE：醒目留言（SC）
+                + SUPER_CHAT_MESSAGE_JPN：醒目留言（带日语翻译？）
+                '''
                 logger.debug(json.dumps(js, indent=4, ensure_ascii=False))
+                with open('data.json', 'a+', encoding='utf-8') as fp:
+                    json.dump(js, fp, indent=4, ensure_ascii=False)
 
     async def send(self, cmd):
         if isinstance(cmd, str):
