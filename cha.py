@@ -106,7 +106,7 @@ async def index():
             try:
                 r = requests.get(room_info['cover'])
             except Exception as e:
-                toast(f'又是这里报错？ Exception: {e}', 0, color='error')
+                toast(f'又是这里报错 Exception: {e}', 0, color='error')
             put_row([
                 put_image(notice.circle_corner(r.content), format='png'),
                 None,
