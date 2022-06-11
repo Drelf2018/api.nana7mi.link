@@ -112,7 +112,7 @@ class LiveDB(DataBase):
         else:
             if not data[0]:
                 return
-            return [self.d2d(d) for d in data][::-1]
+            return [self.d2d(d) for d in data]
         
 
 danmuDB = DanmuDB()

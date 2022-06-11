@@ -14,8 +14,8 @@ from pywebio.platform.fastapi import webio_routes
 from pywebio.session import eval_js, run_async, run_js
 from uvicorn import Config, Server
 
-from adapter import Adapter
 import notice
+from adapter import Adapter
 from database import danmuDB, liveDB
 from WebHandler import LinkedList, get_default_handler
 
@@ -41,7 +41,7 @@ def cha_uid(uid: int, q: Optional[str] = None):
                 lives[(room, st)] = []
                 danmaku = lives[(room, st)]
                 resp.append({'room': room, 'room_info': liveDB.query(room, st), 'danmaku': danmaku})
-            danmaku.append({'time': time, 'username': username, 'msg': msg})
+            danmaku.append({'time': time, 'username': username, 'uid': uid, 'msg': msg})
     return {'status': 0, 'total': count, 'danmaku': resp}
 
 
@@ -50,7 +50,7 @@ def cha_uid(uid: int, q: Optional[str] = None):
 def cha_lives(roomid: int, q: Optional[str] = None):
     lives = liveDB.query(room_id=roomid, all=True)
     if lives:
-        return {'status': 0, 'total': len(lives), 'lives': lives}
+        return {'status': 0, 'total': len(lives), 'lives': lives[::-1]}
     else:
         return {'status': '房间号不正确'}
 
@@ -80,8 +80,7 @@ def cha_live(roomid: int, pos: str, q: Optional[str] = None):
 def code():
     '遍历运行目录并打印所有python源码'
     widgets = []
-    widgets.append(put_markdown('## 😰你知道我长什么样 来找我吧').onclick(partial(run_js, code_='''tempwindow=window.open();
-                                                              tempwindow.location="https://github.com/Drelf2018";''')))
+    widgets.append(put_markdown('## 😰你知道我长什么样 来找我吧').onclick(partial(run_js, code_='tw=window.open();tw.location="https://github.com/Drelf2018";')))
     widgets.append(put_code(f'# 监听直播间列表 如有新增需要 B站联系@脆鲨12138\nroom_ids = {room_ids}', 'python'))
     for root, folders, files in os.walk('.'):
         for file in files:
@@ -96,42 +95,60 @@ async def index():
     '狠狠查他弹幕'
 
     # 按钮点击事件
-    async def onclick():
-        uid = await eval_js('prompt("输入查询用户uid")')
-        # run_js(f'window.open("./uid/{value}")')
-        if uid.isdigit:
-            js = cha_uid(uid)
-        else:
-            return
-
+    async def onclick(btn):
         def t2s(timenum, format='%H:%M:%S'):
             return time.strftime(format, time.localtime(timenum))
 
+        def put_live(room_info):
+            r = requests.get(room_info['cover'])
+            put_row([
+                put_image(notice.circle_corner(r.content), format='png'),
+                None,
+                put_column([
+                    put_markdown('### {username}【{title}】'.format_map(room_info)),
+                    put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y-%m-%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y-%m-%d %H:%M:%S")}__')
+                ])
+            ], size='10fr 1fr 30fr', scope='query_scope')
+
+        def put_danmaku(room_info, danmaku, scope='query_scope'):
+            put_live(room_info)
+            danma_str = ''
+            for dm in danmaku:
+                danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}\n\n'
+            if not scope:
+                put_collapse(f'共计 {len(danmaku)} 条弹幕记录', put_markdown(danma_str), scope='query_scope')
+            else:
+                put_markdown(danma_str, scope=scope)
+            put_markdown('---', scope='query_scope')
+
         clear('query_scope')
 
-        first = True
-        danmaku = js['danmaku']
-        for dm in danmaku:
-            if not dm['room_info']:
-                put_markdown(f'{t2s(dm["time"])} [{dm["room"]}] <a href="https://space.bilibili.com/{uid}">{dm["username"]}</a> {dm["msg"]}', scope='query_scope')
+        if btn == '😋查发言':
+            uid = await eval_js('prompt("输入查询用户uid")')
+            if uid.isdigit:
+                js = cha_uid(uid)
             else:
-                room_info = dm['room_info']
-                danmaku2 = dm['danmaku']
-                r = requests.get(room_info['cover'])
-                if not first:
-                    put_markdown('---', scope='query_scope')
-                put_row([
-                    put_image(notice.circle_corner(r.content), format='png'),
-                    None,
-                    put_column([
-                        put_markdown('### {username}【{title}】'.format_map(room_info)),
-                        put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y-%m-%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y-%m-%d %H:%M:%S")}__')
-                    ])
-                ], size='10fr 1fr 30fr', scope='query_scope')
-                for dm2 in danmaku2:
-                    put_markdown(f'{t2s(dm2["time"])} <a href="https://space.bilibili.com/{uid}">{dm2["username"]}</a> {dm2["msg"]}', scope='query_scope')
-                put_markdown('---', scope='query_scope')
-            first = False
+                toast('输入不正确', 3, color='error')
+                return
+
+            first = True
+            danmaku = js['danmaku']
+            for dm in danmaku:
+                if not dm['room_info']:
+                    put_markdown(f'{t2s(dm["time"], "%Y-%m-%d %H:%M:%S")} [{dm["room"]}] <a href="https://space.bilibili.com/{uid}">{dm["username"]}</a> {dm["msg"]}', scope='query_scope')
+                else:
+                    if not first:
+                        put_markdown('---', scope='query_scope')
+                    put_danmaku(dm['room_info'], dm['danmaku'])
+                first = False
+        elif btn == '🍜查直播':
+            roomid = await eval_js('prompt("输入查询直播间号")')
+            for live in liveDB.query(room_id=roomid, all=True):
+                if not live['sp']:
+                    live['sp'] = time.time()
+                danmaku = danmuDB.query_room(roomid, live['st'], live['sp'])
+                put_danmaku(live, danmaku, scope=None)
+
 
     put_markdown('# 😎个人用弹幕记录站 / api.nana7mi.link')
     put_tabs([
@@ -147,12 +164,10 @@ async def index():
         ]},
         {'title': '公告', 'content': notice.notice()},
         {'title': '查询', 'content': [
-            put_image(esu, format='png', width='100%'),
-            put_markdown('---'),
-            put_button('😋查', onclick=onclick),
-            put_markdown('*<font color="grey">请在“结果”标签页查看查询信息</color>*')
-        ]},
-        {'title': '结果', 'content': put_scope('query_scope')}
+            put_image(esu, format='png').onclick(partial(run_js, code_='tw=window.open();tw.location="https://www.bilibili.com/video/BV1pR4y1W7M7";')),
+            put_buttons(['😋查发言', '🍜查直播'], onclick=onclick),
+            put_scope('query_scope')
+        ]}
     ]).style('border:none;')  # 取消 put_tabs 的边框
 
     run_async(refresh_msg(loglist))  # 刷新消息

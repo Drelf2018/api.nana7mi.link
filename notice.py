@@ -50,6 +50,22 @@ for root, folders, files in os.walk('./notice_pic'):
 def notice():
     return [
         put_row([
+            put_image(PICS['notice.6.11.png']),
+            None,
+            put_markdown('''## 📢 06月11日15:40临时不停机更新公告
+
+            感谢您对《api.nana7mi.link》的关注与支持。我们计划将于2022年06月11日15:40进行服务器不停机更新。本次更新不会影响用户正常查询进程，更新结束后，用户只需选择合适时间重启网站即可完成更新。
+
+            更新时间：
+            2022年06月11日15:40
+
+            更新内容：
+            ◆ 修改「查询」页面配图
+            ◆ 新增「查询」页面查直播记录按钮
+            ◆ 修复了一个「查询」时导致记录乱序的错误''')
+        ], size='18fr 1fr 24fr'),
+        put_markdown('---'),
+        put_row([
             put_image(PICS['notice.6.10.png']),
             None,
             put_markdown('''## 📢 06月10日11:20临时不停机更新公告
@@ -76,6 +92,5 @@ def notice():
             更新内容：
             ◆ 修复使用【api.nana7mi.link/live/{roomid}/last】进行直播记录查询在部分情况下报错的问题
             ◆ 新增「公告Notice」页面''')
-        ], size='18fr 1fr 24fr'),
-        put_markdown('---')
+        ], size='18fr 1fr 24fr')
     ]
