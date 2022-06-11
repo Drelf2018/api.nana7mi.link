@@ -25,22 +25,24 @@ esu = Image.open('esu.png')
 forever = Image.open('forever.png')
 
 
+# 查某用户在记录中所有弹幕
 @app.get("/uid/{uid}")
 def cha_uid(uid: int, q: Optional[str] = None):
     dms = danmuDB.query('ROOM,TIME,USERNAME,MSG,ST', True, UID=uid)
-    count = 0
+    count = 0  # 弹幕数记录
     resp = []
     lives = {}
-    for room, time, username, msg, st in dms[::-1]:
+    for room, time, username, msg, st in dms[::-1]:  # 倒序输出
         if msg:
             count += 1
-        if not st:
+        if not st:  # 没有 st 表示是在下播时发送的弹幕 直接添加进 resp
             resp.append({'room': room, 'room_info': False, 'time': time, 'username': username, 'msg': msg})
-        else:
+        else:  # 用 (room, st) 作为 key 选出一个弹幕列表，把该用户在该场直播中所有弹幕添加在这个列表里
             danmaku = lives.get((room, st))
             if not danmaku:
                 lives[(room, st)] = []
                 danmaku = lives[(room, st)]
+                # 将这个直播间信息和该用户在这场直播的所有弹幕存进 resp
                 resp.append({'room': room, 'room_info': liveDB.query(room, st), 'danmaku': danmaku})
             danmaku.append({'time': time, 'username': username, 'uid': uid, 'msg': msg})
     return {'status': 0, 'total': count, 'danmaku': resp}
