@@ -217,6 +217,6 @@ room_ids = [
 
 loop = asyncio.get_event_loop()
 loop.create_task(Adapter(logger).run(room_ids))
-config = Config(app, loop=loop, host="0.0.0.0", debug=True, ssl_keyfile='nana7mi.link.key', ssl_certfile='nana7mi.link_bundle.crt')
+config = Config(app, loop=loop, host="0.0.0.0", port=443, debug=True, ssl_keyfile='nana7mi.link.key', ssl_certfile='nana7mi.link_bundle.crt')
 server = Server(config=config)
 loop.run_until_complete(server.serve())
