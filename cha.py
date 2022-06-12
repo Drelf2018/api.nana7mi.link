@@ -143,12 +143,14 @@ async def index():
             danmaku = js['danmaku']
             for dm in danmaku:
                 if not dm['room_info']:
+                    first = False
                     put_markdown(f'{t2s(dm["time"], "%Y-%m-%d %H:%M:%S")} [{dm["room"]}] <a href="https://space.bilibili.com/{uid}">{dm["username"]}</a> {dm["msg"]}', scope='query_scope')
                 else:
                     if not first:
                         put_markdown('---', scope='query_scope')
+                    first = True    
                     put_danmaku(dm['room_info'], dm['danmaku'])
-                first = False
+
         elif btn == '🍜查直播':
             roomid = await eval_js('prompt("输入查询直播间号")')
             lives = liveDB.query(room_id=roomid, all=True)
@@ -158,12 +160,13 @@ async def index():
                     put_danmaku(live, danmaku, scope=None)
 
 
-    quotation = [
-        '你们会无缘无故的说好用，就会无缘无故的骂难用',
-        '哈咯哈咯，听得到吗'
+    quotations = [
+        '你们会无缘无故的说好用，就代表哪天无缘无故的就要骂难用',
+        '哈咯哈咯，听得到吗',
+        '还什么都没有更新，不要急好嘛'
     ]
 
-    put_markdown(f'# 😎 api.nana7mi.link <font color="grey" size=4>*{random.choice(quotation)}*</font>')
+    put_markdown(f'# 😎 api.nana7mi.link <font color="grey" size=4>*{random.choice(quotations)}*</font>')
     put_tabs([
         {'title': '终端', 'content': put_scrollable(put_scope('background'), height=510, keep_bottom=True)},
         {'title': '源码', 'content': code()},

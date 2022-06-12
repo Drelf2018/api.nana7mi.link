@@ -74,42 +74,44 @@ class Adapter:
                         name, uid, title, cover = info['name'], info['uid'], info['title'], info['cover']
                         liveDB.insert(ROOM=roomid, USERNAME=name, UID=uid, TITLE=title, COVER=cover, ST=start_time)
                         logger.info(f'`{name}` 正在 `{roomid}` 直播\n标题：{title}\n封面：{cover}')
+
                 elif js['command'] == 'DANMU_MSG':  # 接受到弹幕
                     info = js['content']['info']
                     danmu.append((roomid, info[9]['ts'], info[2][1], info[2][0], info[1], ROOM_STATUS.get(roomid, 0)))
                     logger.info(f'在直播间 `{roomid}` 收到 `{info[2][1]}` 的弹幕：{info[1]}')
                     # 向暂存弹幕库添加元组 (房间号, 时间戳, 用户名, 用户uid, 信息内容, 当前直播间的开播时间)
                     # 当前直播间的开播时间 为 None 或 0 表示未开播
+
                 elif js['command'] == 'SEND_GIFT':  # 接受到礼物
-                    # with open('gift.json', 'a+', encoding='utf-8') as fp:
-                    #    json.dump(js, fp, indent=4, ensure_ascii=False)
                     data = js['content']['data']
-                    '''
-                    "action": "投喂",
-                    "combo_send": null,
-                    "giftId": 31531,
-                    "giftName": "PK票",
-                    "num": 1,
-                    "price": 0,
-                    "rcost": 167167827,
-                    "timestamp": 1654962455,
-                    "uid": 388323866,
-                    "uname": "评论区up主汪某"
-                    '''
+                    msg = '{action} {giftName}'.format_map(data) + f' </fnot color="red">￥{data["price"]//1000}</font>'
+                    danmu.append((roomid, data['timestamp'], data['uname'], data['uid'], msg, ROOM_STATUS.get(roomid, 0)))
+                    logger.info(f'在直播间 `{roomid}` 收到 `{data["uname"]}` 的礼物：{data["giftName"]}')
+
                 elif js['command'] == 'GUARD_BUY':  # 接受到大航海
-                    pass
+                    data = js['content']['data']
+                    msg = f'赠送 {data["gift_name"]} </fnot color="red">￥{data["price"]//1000}</font>'
+                    danmu.append((roomid, data['start_time'], data['username'], data['uid'], msg, ROOM_STATUS.get(roomid, 0)))
+                    logger.info(f'在直播间 `{roomid}` 收到 `{data["username"]}` 的{data["gift_name"]}')
+
                 elif js['command'] in ['SUPER_CHAT_MESSAGE', 'SUPER_CHAT_MESSAGE_JPN']:  # 接受到醒目留言
-                    pass
+                    data = js['content']['data']
+                    danmu.append((roomid, data['start_time'], data['user_info']['uname'], data['uid'], data['message'], ROOM_STATUS.get(roomid, 0)))
+                    logger.info(f'在直播间 `{roomid}` 收到 `{data["user_info"]["uname"]}` 的 SuperChat: {data["message"]}')
+
                 elif js['command'] == 'PREPARING' and ROOM_STATUS.get(roomid):  # 下播 更新数据库中下播时间戳 并将全局数组清零（真能清零吗（你在暗示什么））
                     liveDB.update(roomid, ROOM_STATUS[roomid], round(time.time()))
                     logger.info(f'直播间 `{roomid}` 下播了')
                     del ROOM_STATUS[roomid]
+
                 else:
                     logger.debug(json.dumps(js, indent=4, ensure_ascii=False))
                     if js['command'] == 'COMBO_SEND':
+                        pass
                         # COMBO_SEND: 礼物连击 没遇到过 不知道是啥
-                        with open('data.json', 'a+', encoding='utf-8') as fp:
-                            json.dump(js, fp, indent=4, ensure_ascii=False)
+                        # 遇到了 感觉没啥用 不记录了
+                        # with open('data.json', 'a+', encoding='utf-8') as fp:
+                        #    json.dump(js, fp, indent=4, ensure_ascii=False)
 
     async def send(self, cmd):  # 不知道有啥用的发送消息 但是既然有ws连接还是写个发送好 万一用到了呢
         if isinstance(cmd, str):
