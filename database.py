@@ -86,7 +86,7 @@ class DanmuDB(DataBase):
         dms = conn.execute(sql).fetchall()
         if flag:
             dms = dms[::-1]
-        return [{'time': dm[0], 'username': dm[1], 'uid': dm[2], 'msg': dm[3]} for dm in dms]
+        return [{'time': dm[0], 'username': dm[1], 'uid': dm[2], 'msg': dm[3].replace('fnot', 'font')} for dm in dms]
 
 
 class LiveDB(DataBase):
