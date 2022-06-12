@@ -83,8 +83,8 @@ class Adapter:
 
                 elif js['command'] == 'SEND_GIFT':  # 接受到礼物
                     data = js['content']['data']
-                    msg = '{action} {giftName}'.format_map(data) + f'<font color="red">￥{data["price"]//1000}</font>'
-                    self.danmu.append((roomid, data['timestamp'], data['uname'], data['uid'], msg, 'SEND_GIFT', data["price"]//1000, ROOM_STATUS.get(roomid, 0)))
+                    msg = '{action} {giftName}'.format_map(data) + f'<font color="red">￥{data["price"]/1000}</font>'
+                    self.danmu.append((roomid, data['timestamp'], data['uname'], data['uid'], msg, 'SEND_GIFT', data["price"]/1000, ROOM_STATUS.get(roomid, 0)))
                     logger.info(f'在直播间 `{roomid}` 收到 `{data["uname"]}` 的礼物：{data["giftName"]}')
 
                 elif js['command'] == 'GUARD_BUY':  # 接受到大航海

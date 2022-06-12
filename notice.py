@@ -64,6 +64,7 @@ def notice():
 
             更新内容：
             ◆ 为网站添加了SSL证书，现可用 <a href="https://api.nana7mi.link">https://api.nana7mi.link</a> 访问
+            ◆ 为网页头新增了随机语录
             ◆ 新增弹幕记录时对礼物、SuperChat、大航海的记录
             ◆ 修复了一个「查询」时导致记录不全的错误
             ◆ 修复了一个打字把font打成fnot导致数据库烂掉的错误
