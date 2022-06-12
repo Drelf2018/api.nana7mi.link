@@ -84,19 +84,19 @@ class Adapter:
 
                 elif js['command'] == 'SEND_GIFT':  # 接受到礼物
                     data = js['content']['data']
-                    msg = '{action} {giftName}'.format_map(data) + f' </fnot color="red">￥{data["price"]//1000}</font>'
+                    msg = '{action} {giftName}'.format_map(data) + f' </font color="red">￥{data["price"]//1000}</font>'
                     danmu.append((roomid, data['timestamp'], data['uname'], data['uid'], msg, ROOM_STATUS.get(roomid, 0)))
                     logger.info(f'在直播间 `{roomid}` 收到 `{data["uname"]}` 的礼物：{data["giftName"]}')
 
                 elif js['command'] == 'GUARD_BUY':  # 接受到大航海
                     data = js['content']['data']
-                    msg = f'赠送 {data["gift_name"]} </fnot color="red">￥{data["price"]//1000}</font>'
+                    msg = f'赠送 {data["gift_name"]} </font color="red">￥{data["price"]//1000}</font>'
                     danmu.append((roomid, data['start_time'], data['username'], data['uid'], msg, ROOM_STATUS.get(roomid, 0)))
                     logger.info(f'在直播间 `{roomid}` 收到 `{data["username"]}` 的{data["gift_name"]}')
 
                 elif js['command'] in ['SUPER_CHAT_MESSAGE', 'SUPER_CHAT_MESSAGE_JPN']:  # 接受到醒目留言
                     data = js['content']['data']
-                    msg = '{message} </fnot color="red">￥{price}</font>'.format_map(data)
+                    msg = '{message} </font color="red">￥{price}</font>'.format_map(data)
                     danmu.append((roomid, data['start_time'], data['user_info']['uname'], data['uid'], msg, ROOM_STATUS.get(roomid, 0)))
                     logger.info(f'在直播间 `{roomid}` 收到 `{data["user_info"]["uname"]}` 的 SuperChat: {data["message"]}')
 
