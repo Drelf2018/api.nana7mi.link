@@ -96,7 +96,8 @@ class Adapter:
 
                 elif js['command'] in ['SUPER_CHAT_MESSAGE', 'SUPER_CHAT_MESSAGE_JPN']:  # 接受到醒目留言
                     data = js['content']['data']
-                    danmu.append((roomid, data['start_time'], data['user_info']['uname'], data['uid'], data['message'], ROOM_STATUS.get(roomid, 0)))
+                    msg = '{message} </fnot color="red">￥{price}</font>'.format_map(data)
+                    danmu.append((roomid, data['start_time'], data['user_info']['uname'], data['uid'], msg, ROOM_STATUS.get(roomid, 0)))
                     logger.info(f'在直播间 `{roomid}` 收到 `{data["user_info"]["uname"]}` 的 SuperChat: {data["message"]}')
 
                 elif js['command'] == 'PREPARING' and ROOM_STATUS.get(roomid):  # 下播 更新数据库中下播时间戳 并将全局数组清零（真能清零吗（你在暗示什么））
