@@ -152,8 +152,10 @@ cython_debug/
 #.idea/
 
 cache
-nana7mi.link.key
-nana7mi.link_bundle.crt
+api.nana7mi.link.key
+api.nana7mi.link_bundle.crt
 biligo-ws-live.exe
 Core.db
 start.bat
+data.json
+gift.json
