@@ -81,8 +81,8 @@ class Adapter:
                     # 向暂存弹幕库添加元组 (房间号, 时间戳, 用户名, 用户uid, 信息内容, 当前直播间的开播时间)
                     # 当前直播间的开播时间 为 None 或 0 表示未开播
                 elif js['command'] == 'SEND_GIFT':  # 接受到礼物
-                    with open('gift.json', 'a+', encoding='utf-8') as fp:
-                        json.dump(js, fp, indent=4, ensure_ascii=False)
+                    # with open('gift.json', 'a+', encoding='utf-8') as fp:
+                    #    json.dump(js, fp, indent=4, ensure_ascii=False)
                     data = js['content']['data']
                     '''
                     "action": "投喂",
