@@ -25,22 +25,24 @@ esu = Image.open('esu.png')
 forever = Image.open('forever.png')
 
 
+# 查某用户在记录中所有弹幕
 @app.get("/uid/{uid}")
 def cha_uid(uid: int, q: Optional[str] = None):
     dms = danmuDB.query('ROOM,TIME,USERNAME,MSG,ST', True, UID=uid)
-    count = 0
+    count = 0  # 弹幕数记录
     resp = []
     lives = {}
-    for room, time, username, msg, st in dms[::-1]:
+    for room, time, username, msg, st in dms[::-1]:  # 倒序输出
         if msg:
             count += 1
-        if not st:
+        if not st:  # 没有 st 表示是在下播时发送的弹幕 直接添加进 resp
             resp.append({'room': room, 'room_info': False, 'time': time, 'username': username, 'msg': msg})
-        else:
+        else:  # 用 (room, st) 作为 key 选出一个弹幕列表，把该用户在该场直播中所有弹幕添加在这个列表里
             danmaku = lives.get((room, st))
             if not danmaku:
                 lives[(room, st)] = []
                 danmaku = lives[(room, st)]
+                # 将这个直播间信息和该用户在这场直播的所有弹幕存进 resp
                 resp.append({'room': room, 'room_info': liveDB.query(room, st), 'danmaku': danmaku})
             danmaku.append({'time': time, 'username': username, 'uid': uid, 'msg': msg})
     return {'status': 0, 'total': count, 'danmaku': resp}
@@ -106,7 +108,7 @@ async def index():
             try:
                 r = requests.get(room_info['cover'])
             except Exception as e:
-                toast(f'又是这里报错？ Exception: {e}', 0, color='error')
+                toast(f'又是这里报错 Exception: {e}', 0, color='error')
             put_row([
                 put_image(notice.circle_corner(r.content), format='png'),
                 None,
@@ -215,6 +217,6 @@ room_ids = [
 
 loop = asyncio.get_event_loop()
 loop.create_task(Adapter(logger).run(room_ids))
-config = Config(app, loop=loop, host="0.0.0.0", port=80, reload=True, debug=True)
+config = Config(app, loop=loop, host="0.0.0.0", debug=True, ssl_keyfile='nana7mi.link.key', ssl_certfile='nana7mi.link_bundle.crt')
 server = Server(config=config)
 loop.run_until_complete(server.serve())

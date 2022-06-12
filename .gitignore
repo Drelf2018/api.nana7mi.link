@@ -155,3 +155,5 @@ cache
 biligo-ws-live.exe
 Core.db
 start.bat
+data.json
+cache
