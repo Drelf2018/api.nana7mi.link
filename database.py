@@ -10,6 +10,8 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS DANMU(
     USERNAME TEXT,
     UID INT,
     MSG TEXT,
+    MSG_TYPE TEXT,
+    MSG_PRICE INT,
     ST INT
 );''')
 cursor.execute('''CREATE TABLE IF NOT EXISTS LIVE(
@@ -73,7 +75,7 @@ class DanmuDB(DataBase):
         super().__init__('DANMU')
     
     def insert(self, data):
-        sql = f'INSERT INTO {self.table} (ROOM,TIME,USERNAME,UID,MSG,ST) VALUES (?,?,?,?,?,?);'
+        sql = f'INSERT INTO {self.table} (ROOM,TIME,USERNAME,UID,MSG,MSG_TYPE,MSG_PRICE,ST) VALUES (?,?,?,?,?,?,?,?);'
         conn.executemany(sql, data)
         self.save()
     
@@ -82,11 +84,11 @@ class DanmuDB(DataBase):
         if not stop_time:
             stop_time = time.time()
             flag = True
-        sql = f'SELECT TIME,USERNAME,UID,MSG FROM DANMU WHERE ROOM = {roomid} AND TIME >= {start_time} AND TIME <= {stop_time}'
+        sql = f'SELECT TIME,USERNAME,UID,MSG,MSG_TYPE,MSG_PRICE FROM DANMU WHERE ROOM = {roomid} AND TIME >= {start_time} AND TIME <= {stop_time}'
         dms = conn.execute(sql).fetchall()
         if flag:
             dms = dms[::-1]
-        return [{'time': dm[0], 'username': dm[1], 'uid': dm[2], 'msg': dm[3].replace('fnot', 'font')} for dm in dms]
+        return [{'time': dm[0], 'username': dm[1], 'uid': dm[2], 'msg': dm[3], 'type': dm[4], 'price': dm[5]} for dm in dms]
 
 
 class LiveDB(DataBase):

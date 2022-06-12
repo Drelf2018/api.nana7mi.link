@@ -50,6 +50,27 @@ for root, folders, files in os.walk('./notice_pic'):
 def notice():
     return [
         put_row([
+            put_image(PICS['notice.6.13.png']),
+            None,
+            put_markdown('''## 📢 06月13日01:10临时不停机更新公告
+
+            感谢您对《api.nana7mi.link》的关注与支持。我们计划将于2022年06月13日01:10进行服务器不停机更新。本次更新不会影响用户正常查询进程，更新结束后，用户只需选择合适时间重启网站即可完成更新。
+
+            更新时间：
+            2022年06月13日01:10
+
+            更新说明：
+            本次更新为版本更新，前期Beta测试时的数据已被移除。
+
+            更新内容：
+            ◆ 为网站添加了SSL证书，现可用 <a href="https://api.nana7mi.link">https://api.nana7mi.link</a> 访问
+            ◆ 新增弹幕记录时对礼物、SuperChat、大航海的记录
+            ◆ 修复了一个「查询」时导致记录不全的错误
+            ◆ 修复了一个打字把font打成fnot导致数据库烂掉的错误
+            ◆ 新建了一个数据库并对外宣布版本大更新''')
+        ], size='18fr 1fr 24fr'),
+        put_markdown('---'),
+        put_row([
             put_image(PICS['notice.6.11.png']),
             None,
             put_markdown('''## 📢 06月11日15:40临时不停机更新公告

@@ -34,7 +34,6 @@ def cha_uid(uid: int, q: Optional[str] = None):
     lives = {}
     for room, time, username, msg, st in dms[::-1]:  # 倒序输出
         if msg:
-            msg = msg.replace('fnot', 'font')
             count += 1
         if not st:  # 没有 st 表示是在下播时发送的弹幕 直接添加进 resp
             resp.append({'room': room, 'room_info': False, 'time': time, 'username': username, 'msg': msg})
@@ -101,8 +100,10 @@ async def index():
     # 按钮点击事件
     async def onclick(btn):
         def t2s(timenum, format='%H:%M:%S'):
-            if not timenum:
+            if timenum is None:
                 return '直播中'
+            elif timenum == 0:
+                return 0
             return time.strftime(format, time.localtime(timenum))
 
         def put_live(room_info):
@@ -123,7 +124,7 @@ async def index():
             put_live(room_info)
             danma_str = ''
             for dm in danmaku:
-                danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"].replace("fnot", "font")}\n\n'
+                danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}\n\n'
             if not scope:
                 put_collapse(f'共计 {len(danmaku)} 条弹幕记录', put_markdown(danma_str), scope='query_scope')
             else:
@@ -145,7 +146,7 @@ async def index():
             for dm in danmaku:
                 if not dm['room_info']:
                     first = False
-                    put_markdown(f'{t2s(dm["time"], "%Y-%m-%d %H:%M:%S")} [{dm["room"]}] <a href="https://space.bilibili.com/{uid}">{dm["username"]}</a> {dm["msg"].replace("fnot", "font")}', scope='query_scope')
+                    put_markdown(f'{t2s(dm["time"], "%Y-%m-%d %H:%M:%S")} [{dm["room"]}] <a href="https://space.bilibili.com/{uid}">{dm["username"]}</a> {dm["msg"]}', scope='query_scope')
                 else:
                     if not first:
                         put_markdown('---', scope='query_scope')
