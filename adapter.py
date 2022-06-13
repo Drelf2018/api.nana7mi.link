@@ -15,6 +15,7 @@ ROOM_STATUS = {}  # 记录开播时间
 # 重启程序后从数据库中读取没有结束时间(SP)的直播间号及开播时间
 for room, st in conn.execute('SELECT ROOM,ST FROM LIVE WHERE SP IS NULL').fetchall():
     ROOM_STATUS[room] = st
+SUPER_CHAT = []  # SC的唯一id避免重复记录
 
 
 class Adapter:
@@ -95,9 +96,11 @@ class Adapter:
 
                 elif js['command'] in ['SUPER_CHAT_MESSAGE', 'SUPER_CHAT_MESSAGE_JPN']:  # 接受到醒目留言
                     data = js['content']['data']
-                    msg = '{message}<font color="red">￥{price}</font>'.format_map(data)
-                    self.danmu.append((roomid, data['start_time'], data['user_info']['uname'], data['uid'], msg, 'SUPER_CHAT_MESSAGE', data['price'], ROOM_STATUS.get(roomid, 0)))
-                    logger.info(f'在直播间 `{roomid}` 收到 `{data["user_info"]["uname"]}` 的 ￥{data["price"]} SuperChat: {data["message"]}')
+                    if data['id'] not in SUPER_CHAT:
+                        SUPER_CHAT.append(data['id'])
+                        msg = '{message}<font color="red">￥{price}</font>'.format_map(data)
+                        self.danmu.append((roomid, data['start_time'], data['user_info']['uname'], data['uid'], msg, 'SUPER_CHAT_MESSAGE', data['price'], ROOM_STATUS.get(roomid, 0)))
+                        logger.info(f'在直播间 `{roomid}` 收到 `{data["user_info"]["uname"]}` 的 ￥{data["price"]} SuperChat: {data["message"]}')
 
                 elif js['command'] == 'PREPARING' and ROOM_STATUS.get(roomid):  # 下播 更新数据库中下播时间戳 并将全局数组清零（真能清零吗（你在暗示什么））
                     liveDB.update(roomid, ROOM_STATUS[roomid], round(time.time()))
