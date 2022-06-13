@@ -96,8 +96,8 @@ class Adapter:
 
                 elif js['command'] in ['SUPER_CHAT_MESSAGE', 'SUPER_CHAT_MESSAGE_JPN']:  # 接受到醒目留言
                     data = js['content']['data']
-                    if data['id'] not in SUPER_CHAT:
-                        SUPER_CHAT.append(data['id'])
+                    if int(data['id']) not in SUPER_CHAT:
+                        SUPER_CHAT.append(int(data['id']))
                         msg = '{message}<font color="red">￥{price}</font>'.format_map(data)
                         self.danmu.append((roomid, data['start_time'], data['user_info']['uname'], data['uid'], msg, 'SUPER_CHAT_MESSAGE', data['price'], ROOM_STATUS.get(roomid, 0)))
                         logger.info(f'在直播间 `{roomid}` 收到 `{data["user_info"]["uname"]}` 的 ￥{data["price"]} SuperChat: {data["message"]}')
