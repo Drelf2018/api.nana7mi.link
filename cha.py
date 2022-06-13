@@ -73,8 +73,14 @@ def cha_live(roomid: int, pos: str, q: Optional[str] = None):
         return {'status': '应该是超出总场次数了', 'exception': str(e)}
     if live:
         if not live['sp']:
-            live['sp'] = time.time()
+            live['sp'] = round(time.time())
+        live.update({'total': 0, 'send_gift': 0, 'guard_buy': 0, 'super_chat_message': 0})
         live['danmaku'] = danmuDB.query_room(roomid, live['st'], live['sp'])
+        for dm in live['danmaku']:
+            if dm['type'] == 'DANMU_MSG':
+                live['total'] += 1
+            else:
+                live[dm['type'].lower()] += dm['price']
         return {'status': 0, 'live':live}
     else:
         return {'status': '房间号不正确'}
@@ -165,7 +171,8 @@ async def index():
     quotations = [
         '你们会无缘无故的说好用，就代表哪天无缘无故的就要骂难用',
         '哈咯哈咯，听得到吗',
-        '还什么都没有更新，不要急好嘛'
+        '还什么都没有更新，不要急好嘛',
+        '直播只是工作吗直播只是工作吗直播只是工作吗？'
     ]
 
     put_markdown(f'# 😎 api.nana7mi.link <font color="grey" size=4>*{random.choice(quotations)}*</font>')
