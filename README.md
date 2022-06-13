@@ -1,4 +1,4 @@
-# api.nana7mi.link
+# 😎 api.nana7mi.link
 
 > Q1: 好用吗？
 
