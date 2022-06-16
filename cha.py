@@ -225,7 +225,7 @@ logger = Logger('MAIN', INFO)
 loglist, handler = get_default_handler(50)  # 详见 WebHandler.py
 logger.addHandler(handler)
 
-app.mount('/', FastAPI(routes=webio_routes([index], cdn=False)))  # 绑定应用到网页根目录
+app.mount('/', FastAPI(routes=webio_routes([index]), cdn='/html'))  # 绑定应用到网页根目录
 
 room_ids = [
     21452505, 80397, 22778610,
