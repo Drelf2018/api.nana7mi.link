@@ -130,20 +130,23 @@ async def index():
                 ])
             ], size='10fr 1fr 30fr', scope='query_scope')
 
-        def check_scope(danmu: str, scope: str):
+        def check_scope(danmaku: str, scope: str):
             if not used_scope.get(scope):
-                put_markdown(danmu, scope=scope)
+                danma_str = ''  # 将所有弹幕连接成一个长字符串
+                for dm in danmaku:
+                    danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}\n\n'
+                put_markdown(danma_str, scope=scope)
                 used_scope[scope] = True
 
         # 打印弹幕列表
         async def put_danmaku(room_info: dict, danmaku: list, scope: str = 'query_scope'):
             await put_live(room_info)  # 先打印直播信息
-            danma_str = ''  # 将所有弹幕连接成一个长字符串
-            for dm in danmaku:
-                danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}\n\n'
             if not scope:
-                put_collapse(f'共计 {len(danmaku)} 条弹幕记录', put_scope(str(room_info['st'])), scope='query_scope').onclick(partial(check_scope, danmu=danma_str, scope=str(room_info['st'])))
+                put_collapse(f'共计 {len(danmaku)} 条弹幕记录', put_scope(str(room_info['st'])), scope='query_scope').onclick(partial(check_scope, danmaku=danmaku, scope=str(room_info['st'])))
             else:
+                danma_str = ''  # 将所有弹幕连接成一个长字符串
+                for dm in danmaku:
+                    danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}\n\n'
                 put_markdown(danma_str, scope=scope)
             put_markdown('---', scope='query_scope')
 
