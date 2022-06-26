@@ -130,10 +130,11 @@ async def index():
                 ])
             ], size='10fr 1fr 30fr', scope='query_scope')
 
-        def check_scope(danmaku: str, scope: str):
+        def check_scope(room_info: dict):
+            scope = str(room_info['st'])
             if not used_scope.get(scope):
                 danma_str = ''  # 将所有弹幕连接成一个长字符串
-                for dm in danmaku:
+                for dm in danmuDB.query_room(room_info['room'], room_info['st'], room_info['sp']):
                     danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}\n\n'
                 put_markdown(danma_str, scope=scope)
                 used_scope[scope] = True
@@ -142,7 +143,7 @@ async def index():
         async def put_danmaku(room_info: dict, danmaku: list, scope: str = 'query_scope'):
             await put_live(room_info)  # 先打印直播信息
             if not scope:
-                put_collapse(f'共计 {len(danmaku)} 条弹幕记录', put_scope(str(room_info['st'])), scope='query_scope').onclick(partial(check_scope, danmaku=danmaku, scope=str(room_info['st'])))
+                put_collapse('弹幕列表', put_scope(str(room_info['st'])), scope='query_scope').onclick(partial(check_scope, room_info=room_info))
             else:
                 danma_str = ''  # 将所有弹幕连接成一个长字符串
                 for dm in danmaku:
@@ -178,8 +179,7 @@ async def index():
             if lives:
                 used_scope = {}
                 for live in lives[::-1]:
-                    danmaku = danmuDB.query_room(roomid, live['st'], live['sp'])
-                    await put_danmaku(live, danmaku, scope=None)
+                    await put_danmaku(live, None, scope=None)
 
 
     quotations = [
