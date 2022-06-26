@@ -87,7 +87,7 @@ def get_default_handler(size: int = 20):
     '获取一个可遍历链表和 Logger Handler'
     loglist = LinkedList(size)
     handler = WebHandler(loglist=loglist)
-    handler.setFormatter(Formatter(f'`%(asctime)s` `%(levelname)s`: %(message)s', '%H:%M:%S'))
+    handler.setFormatter(Formatter(f'`%(asctime)s` %(message)s', '%H:%M:%S'))
     return loglist, handler
 
 

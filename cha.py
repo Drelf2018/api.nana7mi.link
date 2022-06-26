@@ -130,6 +130,11 @@ async def index():
                 ])
             ], size='10fr 1fr 30fr', scope='query_scope')
 
+        def check_scope(danmu: str, scope: str):
+            if not used_scope.get(scope):
+                put_markdown(danmu, scope=scope)
+                used_scope[scope] = True
+
         # 打印弹幕列表
         async def put_danmaku(room_info: dict, danmaku: list, scope: str = 'query_scope'):
             await put_live(room_info)  # 先打印直播信息
@@ -137,7 +142,7 @@ async def index():
             for dm in danmaku:
                 danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}\n\n'
             if not scope:
-                put_collapse(f'共计 {len(danmaku)} 条弹幕记录', put_markdown(danma_str), scope='query_scope')
+                put_collapse(f'共计 {len(danmaku)} 条弹幕记录', put_scope(str(room_info['st'])), scope='query_scope').onclick(partial(check_scope, danmu=danma_str, scope=str(room_info['st'])))
             else:
                 put_markdown(danma_str, scope=scope)
             put_markdown('---', scope='query_scope')
@@ -168,6 +173,7 @@ async def index():
             roomid = await eval_js('prompt("输入查询直播间号")')
             lives = liveDB.query(room_id=roomid, all=True)
             if lives:
+                used_scope = {}
                 for live in lives[::-1]:
                     danmaku = danmuDB.query_room(roomid, live['st'], live['sp'])
                     await put_danmaku(live, danmaku, scope=None)
@@ -205,13 +211,8 @@ async def index():
 
 async def refresh_msg(loglist: LinkedList, sleeptime: float = 0.33):
     '刷新并打印消息'
-    count = 0
     node = loglist.getTrueHead()
     while True:
-        count += 1
-        if count >= 10/sleeptime:
-            logger.debug('Heartbeat')
-            count = 0
         await asyncio.sleep(sleeptime)
         while node.getNext():  # 遍历并打印节点内容到网页
             try:
@@ -222,7 +223,7 @@ async def refresh_msg(loglist: LinkedList, sleeptime: float = 0.33):
 
 
 logger = Logger('MAIN', INFO)
-loglist, handler = get_default_handler(50)  # 详见 WebHandler.py
+loglist, handler = get_default_handler(200)  # 详见 WebHandler.py
 logger.addHandler(handler)
 
 app.mount('/', FastAPI(routes=webio_routes([index]), cdn='/html'))  # 绑定应用到网页根目录
@@ -230,10 +231,10 @@ app.mount('/', FastAPI(routes=webio_routes([index]), cdn='/html'))  # 绑定应�
 room_ids = [
     21452505, 80397, 22778610,
     22637261, 22625025, 22632424, 22625027
-]  # 监听直播间号
+]  # 监听中直播间号
 
 loop = asyncio.get_event_loop()
-loop.create_task(Adapter(logger).run(room_ids))
+loop.create_task(Adapter(logger, 'cha').run(room_ids))
 config = Config(app, loop=loop, host="0.0.0.0", port=443, debug=True, ssl_keyfile='api.nana7mi.link.key', ssl_certfile='api.nana7mi.link_bundle.crt')
 server = Server(config=config)
 loop.run_until_complete(server.serve())
