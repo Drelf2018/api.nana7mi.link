@@ -6,13 +6,13 @@ from functools import partial
 from logging import INFO, Logger
 from typing import Optional
 
-import requests
+from aiohttp import ClientSession
 from fastapi import FastAPI
 from PIL import Image
 from pywebio.input import *
 from pywebio.output import *
 from pywebio.platform.fastapi import webio_routes
-from pywebio.session import eval_js, run_async, run_js
+from pywebio.session import eval_js, run_async, run_js, run_asyncio_coroutine as rac
 from uvicorn import Config, Server
 
 import notice
@@ -104,6 +104,8 @@ def code():
 async def index():
     '狠狠查他弹幕'
 
+    session = ClientSession()
+
     # 按钮点击事件
     async def onclick(btn):
         # 时间戳转指定格式
@@ -117,12 +119,13 @@ async def index():
         # 打印直播场次信息
         async def put_live(room_info: dict):
             try:
-                r = requests.get(room_info['cover'])  # 获取直播封面
+                r = await rac(session.get(room_info['cover']))  # 获取直播封面
+                content = await rac(r.read())
             except Exception as e:
                 # 开了魔法这里会报错
-                toast(f'又是这里报错 Exception: {e}', 0, color='error')
+                toast(f'又是这里报错 Exception: {e} line: {e.__traceback__.tb_lineno}', 0, color='error')
             put_row([
-                put_image(notice.circle_corner(r.content), format='png'),
+                put_image(notice.circle_corner(content), format='png'),
                 None,
                 put_column([
                     put_markdown('### {username}【{title}】'.format_map(room_info)),
@@ -130,12 +133,12 @@ async def index():
                 ])
             ], size='10fr 1fr 30fr', scope='query_scope')
 
-        def check_scope(room_info: dict):
+        async def check_scope(room_info: dict):
             scope = str(room_info['st'])
             if not used_scope.get(scope):
-                danma_str = ''  # 将所有弹幕连接成一个长字符串
-                for dm in danmuDB.query_room(room_info['room'], room_info['st'], room_info['sp']):
-                    danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}\n\n'
+                # 将所有弹幕连接成一个长字符串
+                danma_str = '\n\n'.join([f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}'
+                                            for dm in danmuDB.query_room(room_info['room'], room_info['st'], room_info['sp'])])
                 put_markdown(danma_str, scope=scope)
                 used_scope[scope] = True
 
@@ -145,9 +148,8 @@ async def index():
             if not scope:
                 put_collapse('弹幕列表', put_scope(str(room_info['st'])), scope='query_scope').onclick(partial(check_scope, room_info=room_info))
             else:
-                danma_str = ''  # 将所有弹幕连接成一个长字符串
-                for dm in danmaku:
-                    danma_str += f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}\n\n'
+                danma_str = '\n\n'.join([f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}'
+                                            for dm in danmaku])
                 put_markdown(danma_str, scope=scope)
             put_markdown('---', scope='query_scope')
 
@@ -179,7 +181,7 @@ async def index():
             if lives:
                 used_scope = {}
                 for live in lives[::-1]:
-                    await put_danmaku(live, None, scope=None)
+                    await put_danmaku(live, danmaku=None, scope=None)
 
 
     quotations = [
@@ -236,8 +238,10 @@ room_ids = [
     22637261, 22625025, 22632424, 22625027
 ]  # 监听中直播间号
 
+
 loop = asyncio.get_event_loop()
 loop.create_task(Adapter(logger, 'cha').run(room_ids))
+# config = Config(app, loop=loop, port=80)
 config = Config(app, loop=loop, host="0.0.0.0", port=443, debug=True, ssl_keyfile='api.nana7mi.link.key', ssl_certfile='api.nana7mi.link_bundle.crt')
 server = Server(config=config)
 loop.run_until_complete(server.serve())
