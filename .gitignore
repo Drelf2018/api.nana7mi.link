@@ -159,3 +159,7 @@ Core.db
 start.bat
 data.json
 gift.json
+bili.ico
+Pipfile
+Pipfile.lock
+requirements.txt

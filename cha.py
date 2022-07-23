@@ -3,7 +3,6 @@ import os
 import random
 import time
 from functools import partial
-from logging import INFO, Logger
 from typing import Optional
 
 from aiohttp import ClientSession
@@ -12,13 +11,19 @@ from PIL import Image
 from pywebio.input import *
 from pywebio.output import *
 from pywebio.platform.fastapi import webio_routes
-from pywebio.session import eval_js, run_async, run_js, run_asyncio_coroutine as rac
+from pywebio.session import defer_call, eval_js
+from pywebio.session import run_asyncio_coroutine as rac
+from pywebio.session import run_js
 from uvicorn import Config, Server
 
 import notice
-from adapter import Adapter
 from database import danmuDB, liveDB
-from WebHandler import LinkedList, get_default_handler
+
+import sys
+sys.path.insert(0, 'C:\\Users\\Administrator\\Desktop\\web-Automatic-Goodnight-Algorithm')
+from app import index, admin
+sys.path.insert(0, 'C:\\Users\\Administrator\\Desktop\\web-fans')
+from fans import index as fans
 
 app = FastAPI()
 esu = Image.open('esu.png')  # 查询页面配图
@@ -28,7 +33,7 @@ forever = Image.open('forever.png')  # 私活页面配图
 # 查某用户在记录中所有弹幕
 @app.get("/uid/{uid}")
 def cha_uid(uid: int, q: Optional[str] = None):
-    dms = danmuDB.query('ROOM,TIME,USERNAME,MSG,MSG_TYPE,ST', True, UID=uid)
+    dms = danmuDB.query('roomid,time,username,msg,cmd,st', True, UID=uid)
     count = 0  # 弹幕数记录
     resp = []
     lives = {}
@@ -101,10 +106,14 @@ def code():
     return widgets
 
 
-async def index():
+async def cha():
     '狠狠查他弹幕'
 
     session = ClientSession()
+
+    @defer_call
+    def onclose():
+        loop.create_task(session.close())
 
     # 按钮点击事件
     async def onclick(btn):
@@ -114,6 +123,8 @@ async def index():
                 return '直播中'
             elif timenum == 0:
                 return 0
+            if len(str(timenum)) > 10:
+                timenum //= 1000
             return time.strftime(format, time.localtime(timenum))
 
         # 打印直播场次信息
@@ -193,7 +204,12 @@ async def index():
 
     put_markdown(f'# 😎 api.nana7mi.link <font color="grey" size=4>*{random.choice(quotations)}*</font>')
     put_tabs([
-        {'title': '终端', 'content': put_scrollable(put_scope('background'), height=510, keep_bottom=True)},
+        {'title': '查询', 'content': [
+            put_image(esu, format='png').onclick(partial(run_js, code_='tw=window.open();tw.location="https://www.bilibili.com/video/BV1pR4y1W7M7";')),
+            put_buttons(['😋查发言', '🍜查直播'], onclick=onclick),
+            put_scope('query_scope')
+        ]},
+        {'title': '公告', 'content': notice.notice()},
         {'title': '源码', 'content': code()},
         {'title': '私货', 'content': [
             put_html('''
@@ -202,36 +218,13 @@ async def index():
                 </iframe>'''),
             put_markdown('#### <font color="red">我要陪你成为最强直播员</font>'),
             put_image(forever, format='png'),
-        ]},
-        {'title': '公告', 'content': notice.notice()},
-        {'title': '查询', 'content': [
-            put_image(esu, format='png').onclick(partial(run_js, code_='tw=window.open();tw.location="https://www.bilibili.com/video/BV1pR4y1W7M7";')),
-            put_buttons(['😋查发言', '🍜查直播'], onclick=onclick),
-            put_scope('query_scope')
         ]}
     ]).style('border:none;')  # 取消 put_tabs 的边框
 
-    run_async(refresh_msg(loglist))  # 刷新消息
 
-
-async def refresh_msg(loglist: LinkedList, sleeptime: float = 0.33):
-    '刷新并打印消息'
-    node = loglist.getTrueHead()
-    while True:
-        await asyncio.sleep(sleeptime)
-        while node.getNext():  # 遍历并打印节点内容到网页
-            try:
-                node = node.getNext()
-                put_markdown(node.getValue(), sanitize=True, scope='background')
-            except Exception as e:
-                toast(f'refresh_msg Error: {e}', 5, color='error')
-
-
-logger = Logger('MAIN', INFO)
-loglist, handler = get_default_handler(200)  # 详见 WebHandler.py
-logger.addHandler(handler)
-
-app.mount('/', FastAPI(routes=webio_routes([index]), cdn='/html'))  # 绑定应用到网页根目录
+app.mount('/cha', FastAPI(routes=webio_routes(cha), cdn='/html'))  # 绑定应用到网页根目录
+app.mount('/night', FastAPI(routes=webio_routes([index, admin]), cdn='/html'))
+app.mount('/fans', FastAPI(routes=webio_routes(fans), cdn='/html'))
 
 room_ids = [
     21452505, 80397, 22778610,
@@ -240,8 +233,7 @@ room_ids = [
 
 
 loop = asyncio.get_event_loop()
-loop.create_task(Adapter(logger, 'cha').run(room_ids))
 # config = Config(app, loop=loop, port=80)
-config = Config(app, loop=loop, host="0.0.0.0", port=443, debug=True, ssl_keyfile='api.nana7mi.link.key', ssl_certfile='api.nana7mi.link_bundle.crt')
+config = Config(app, loop=loop, host="0.0.0.0", port=443, debug=True, ssl_keyfile='../api/8032637_api.drelf.cn.key', ssl_certfile='../api/8032637_api.drelf.cn.pem')
 server = Server(config=config)
 loop.run_until_complete(server.serve())
