@@ -7,7 +7,7 @@ import requests
 from aiowebsocket.converses import AioWebSocket
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from database import conn, danmuDB, liveDB
+from liteDB import conn, danmuDB, liveDB
 
 
 try:
@@ -16,7 +16,7 @@ try:
 except Exception:
     filedata = dict()
 BASEURL = filedata.get('url', 'http://localhost:8080')
-room_ids = filedata.get('room_ids', [21452505, 80397, 22778610, 22637261, 22625025, 22632424, 22625027])
+room_ids = filedata.get('room_ids', [21402309, 22816111, 21696950, 24494192, 21692711, 25206807, 22384516, 7688602])
 ROOM_STATUS = {}  # 记录开播时间
 # 重启程序后从数据库中读取没有结束时间(SP)的直播间号及开播时间
 for room, st in conn.execute('SELECT ROOM,ST FROM LIVE WHERE SP IS NULL').fetchall():
