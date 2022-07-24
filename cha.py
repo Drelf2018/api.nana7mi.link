@@ -81,7 +81,7 @@ def cha_live(roomid: int, pos: str, q: Optional[str] = None):
             live['sp'] = round(time.time())
         # 统计弹幕数，礼物、大航海、SuperChat 等金额
         live.update({'total': 0, 'send_gift': 0, 'guard_buy': 0, 'super_chat_message': 0})
-        live['danmaku'] = danmuDB.query_room(roomid, live['st'], live['sp'])
+        live['danmaku'] = list(danmuDB.query_room(roomid, live['st'], live['sp']))
         for dm in live['danmaku']:
             if dm['type'] == 'DANMU_MSG':
                 live['total'] += 1
