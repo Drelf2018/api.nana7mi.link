@@ -20,9 +20,9 @@ import notice
 from database import danmuDB, liveDB
 
 import sys
-sys.path.insert(0, 'C:\\Users\\Administrator\\Desktop\\web-Automatic-Goodnight-Algorithm')
+sys.path.insert(0, '..\\web-Automatic-Goodnight-Algorithm')
 from app import index, admin
-sys.path.insert(0, 'C:\\Users\\Administrator\\Desktop\\web-fans')
+sys.path.insert(0, '..\\web-fans')
 from fans import index as fans
 
 app = FastAPI()
@@ -33,11 +33,11 @@ forever = Image.open('forever.png')  # 私活页面配图
 # 查某用户在记录中所有弹幕
 @app.get("/uid/{uid}")
 def cha_uid(uid: int, q: Optional[str] = None):
-    dms = danmuDB.query('roomid,time,username,msg,cmd,st', True, UID=uid)
+    dms = danmuDB.query('roomid,time,username,msg,cmd,st', True, True, UID=uid)
     count = 0  # 弹幕数记录
     resp = []
     lives = {}
-    for room, time, username, msg, msg_type, st in dms[::-1]:  # 倒序输出
+    for room, time, username, msg, msg_type, st in dms:  # 倒序输出
         if msg_type == 'DANMU_MSG':
             count += 1
         if not st:  # 没有 st 表示是在下播时发送的弹幕 直接添加进 resp
@@ -140,7 +140,7 @@ async def cha():
                 None,
                 put_column([
                     put_markdown('### {username}【{title}】'.format_map(room_info)),
-                    put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y-%m-%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y-%m-%d %H:%M:%S")}__')
+                    put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y/%m/%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y/%m/%d %H:%M:%S")}__')
                 ])
             ], size='10fr 1fr 30fr', scope='query_scope')
 
@@ -179,7 +179,7 @@ async def cha():
             for dm in danmaku:
                 if not dm['room_info']:  # 没有 room_info 表示下播时发送的弹幕 直接打印
                     first = False
-                    put_markdown(f'{t2s(dm["time"], "%Y-%m-%d %H:%M:%S")} [{dm["room"]}] <a href="https://space.bilibili.com/{uid}">{dm["username"]}</a> {dm["msg"]}', scope='query_scope')
+                    put_markdown(f'{t2s(dm["time"], "%Y/%m/%d %H:%M:%S")} [{dm["room"]}] <a href="https://space.bilibili.com/{uid}">{dm["username"]}</a> {dm["msg"]}', scope='query_scope')
                 else:
                     if not first:
                         put_markdown('---', scope='query_scope')

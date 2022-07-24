@@ -47,10 +47,12 @@ class DataBase:
         cursor.execute(sql)
         self.save()
 
-    def query(self, cmd='*', all=False, **kwargs):
+    def query(self, cmd='*', all=False, desc=False, **kwargs):
         sql = f'SELECT {cmd} FROM {self.table}'
         if kwargs:
             sql += ' WHERE ' + ' AND '.join([f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}" for k, v in kwargs.items()])
+        if desc:
+            sql += ' order by time desc'
         cursor = conn.cursor()
         if all:
             cursor.execute(sql)
@@ -94,12 +96,12 @@ class DanmuDB(DataBase):
         if not stop_time:
             stop_time = time.time()
             flag = True
-        sql = f'SELECT time,username,uid,msg,cmd,price FROM danmaku WHERE roomid = {roomid} AND time >= {start_time} AND time <= {stop_time}'
+        sql = f'''SELECT time,username,uid,msg,cmd,price FROM danmaku 
+            WHERE roomid = {roomid} AND time >= {start_time} AND time <= {stop_time} 
+            order by time''' + ' desc' if flag else ''
         cursor = conn.cursor()
         cursor.execute(sql)
         dms = cursor.fetchall()
-        if flag:
-            dms = dms[::-1]
         for dm in dms:
             yield {'time': dm[0], 'username': dm[1], 'uid': dm[2], 'msg': dm[3], 'type': dm[4], 'price': dm[5]}
 
