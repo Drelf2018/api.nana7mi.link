@@ -8,6 +8,8 @@ from typing import Optional
 from aiohttp import ClientSession
 from fastapi import FastAPI
 from PIL import Image
+from pywebio import config
+config(js_code='''$("body").prepend('<nav class="navbar navbar-dark bg-dark"><div class="container"><a href="/night" class="router-link-active router-link-exact-active navbar-brand">😎</a><a href="/cha"><img src="https://api.nana7mi.link/pic" height="40px"></a><a href="/fans" class="router-link-active router-link-exact-active navbar-brand">🛒</a></div></nav>')''')
 from pywebio.input import *
 from pywebio.output import *
 from pywebio.platform.fastapi import webio_routes
@@ -99,10 +101,11 @@ def code():
     widgets.append(put_code(f'# 监听直播间列表 如有新增需要 B站联系@脆鲨12138\nroom_ids = {room_ids}', 'python'))
     for root, folders, files in os.walk('.'):  # 遍历打印当前目录下所有 python 脚本
         for file in files:
-            if file.split('.')[-1] == 'py':
+            if file.endswith('.py'):
                 with open(file, 'r', encoding='utf-8') as fp:
                     code_str = fp.read()
                     widgets.append(put_collapse(file, put_code(code_str, 'python')))
+        break
     return widgets
 
 
