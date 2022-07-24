@@ -98,7 +98,7 @@ class DanmuDB(DataBase):
             flag = True
         sql = f'''SELECT time,username,uid,msg,cmd,price FROM danmaku 
             WHERE roomid = {roomid} AND time >= {start_time} AND time <= {stop_time} 
-            order by time''' + ' desc' if flag else ''
+            order by time''' + (' desc' if flag else '')
         cursor = conn.cursor()
         cursor.execute(sql)
         dms = cursor.fetchall()
