@@ -55,7 +55,7 @@ async def onclick(btn):
                 put_markdown('### {username} {title}'.format_map(room_info)),
                 put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y/%m/%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y/%m/%d %H:%M:%S")}__')
             ])
-        ], size='10fr 1fr 30fr', scope='query_scope').onclick(partial(reload_live, room_info=room_info, url=f'https://api.drelf.cn/live/{room_info["room"]}/{pos}', pos=pos))
+        ], size='10fr 1fr 30fr', scope='query_scope').onclick(partial(reload_live, room_info=room_info, url=f'http://0.0.0.0:5762/live/{room_info["room"]}/{pos}', pos=pos))
 
     async def reload_live(room_info, url: str, pos: int):
         clear('query_scope')
@@ -89,7 +89,7 @@ async def onclick(btn):
             uid = await eval_js('prompt("输入查询用户uid")')
             if uid and uid.isdigit:
                 try:
-                    resp = await rac(session.get(f'https://api.drelf.cn/uid/{uid}'))
+                    resp = await rac(session.get(f'http://0.0.0.0:5762/uid/{uid}'))
                 except Exception as e:
                     toast(f'运行时错误：{e}', 3, color='error')
                     return
@@ -111,7 +111,7 @@ async def onclick(btn):
 
         elif btn == '🍜查直播':
             roomid = await eval_js('prompt("输入查询直播间号")')
-            resp = await rac(session.get(f'https://api.drelf.cn/live/{roomid}'))
+            resp = await rac(session.get(f'http://0.0.0.0:5762/live/{roomid}'))
             js = resp.json()
             if js['status'] == 0:
                 n = len(js['lives']) - 1
