@@ -152,6 +152,7 @@ cython_debug/
 #.idea/
 
 cache
+wasted
 api.nana7mi.link.key
 api.nana7mi.link_bundle.crt
 biligo-ws-live.exe
