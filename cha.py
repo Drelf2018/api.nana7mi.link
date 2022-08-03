@@ -6,8 +6,6 @@ import httpx
 import uvicorn
 from fastapi import FastAPI
 from PIL import Image
-from pywebio import config
-config(js_code='''$("body").prepend('<nav class="navbar navbar-dark bg-dark"><div class="container"><a href="/night" class="router-link-active router-link-exact-active navbar-brand">😎</a><a href="/cha"><img src="https://api.nana7mi.link/pic" height="40px"></a><a href="/fans" class="router-link-active router-link-exact-active navbar-brand">🛒</a></div></nav>')''')
 from pywebio.input import *
 from pywebio.output import *
 from pywebio.platform.fastapi import webio_routes
