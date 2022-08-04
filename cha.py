@@ -55,7 +55,7 @@ async def onclick(btn):
                 put_markdown('### {username} {title}'.format_map(room_info)),
                 put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y/%m/%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y/%m/%d %H:%M:%S")}__')
             ])
-        ], size='10fr 1fr 30fr', scope='query_scope').onclick(partial(reload_live, room_info=room_info, url=f'http://0.0.0.0:5762/live/{room_info["room"]}/{pos}', pos=pos))
+        ], size='10fr 1fr 30fr', scope='query_scope').onclick(partial(reload_live, room_info=room_info, url=f'http://localhost:5762/live/{room_info["room"]}/{pos}', pos=pos))
 
     async def reload_live(room_info, url: str, pos: int):
         clear('query_scope')
@@ -89,7 +89,7 @@ async def onclick(btn):
             uid = await eval_js('prompt("输入查询用户uid")')
             if uid and uid.isdigit:
                 try:
-                    resp = await rac(session.get(f'http://0.0.0.0:5762/uid/{uid}'))
+                    resp = await rac(session.get(f'http://localhost:5762/uid/{uid}'))
                 except Exception as e:
                     toast(f'运行时错误：{e}', 3, color='error')
                     return
@@ -111,7 +111,7 @@ async def onclick(btn):
 
         elif btn == '🍜查直播':
             roomid = await eval_js('prompt("输入查询直播间号")')
-            resp = await rac(session.get(f'http://0.0.0.0:5762/live/{roomid}'))
+            resp = await rac(session.get(f'http://localhost:5762/live/{roomid}'))
             js = resp.json()
             if js['status'] == 0:
                 n = len(js['lives']) - 1
@@ -137,6 +137,7 @@ async def cha():
 
 
 async def about():
+    '关于'
     put_tabs([
         {'title': '公告', 'content': notice.notice()},
         {'title': '源码', 'content': code()},
@@ -154,6 +155,4 @@ async def about():
 app.mount('/', FastAPI(routes=webio_routes({'index': cha, 'about': about})))  # 绑定应用到网页根目录, cdn='/html'
 
 if __name__ == '__main__':
-    uvicorn.run(app='cha:app', host="0.0.0.0", port=8001)
-
-# port=443, ssl_keyfile='api.nana7mi.link.key', ssl_certfile='api.nana7mi.link_bundle.crt'
+    uvicorn.run(app='cha:app', host="0.0.0.0", port=443, ssl_keyfile='../api/8032637_api.drelf.cn.key', ssl_certfile='../api/8032637_api.drelf.cn.pem')
