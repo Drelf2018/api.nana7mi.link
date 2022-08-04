@@ -69,5 +69,11 @@ def cha_live(roomid: int, pos: str, q: Optional[str] = None):
         return {'status': '房间号不正确'}
 
 
+file_like = open('eyes.png', mode="rb")
+# 返回图片
+@app.get("/eyes")
+def eyes():
+    return StreamingResponse(file_like, media_type="image/jpg")
+
 if __name__ == '__main__':
     uvicorn.run(app='api:app', host="0.0.0.0", port=5762)
