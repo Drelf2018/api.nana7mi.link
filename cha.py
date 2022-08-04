@@ -5,6 +5,7 @@ from functools import partial
 import httpx
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from PIL import Image
 from pywebio.input import *
 from pywebio.output import *
@@ -151,6 +152,11 @@ async def about():
         ]}
     ]).style('border:none;')  # 取消 put_tabs 的边框
 
+# 返回图片
+@app.get("/eyes")
+def eyes():
+    file_like = open('eyes.png', mode="rb")
+    return StreamingResponse(file_like, media_type="image/jpg")
 
 app.mount('/', FastAPI(routes=webio_routes({'index': cha, 'about': about})))  # 绑定应用到网页根目录, cdn='/html'
 
