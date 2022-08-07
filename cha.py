@@ -39,50 +39,51 @@ def t2s(timenum: int, format: str = '%H:%M:%S') -> str:
         timenum //= 1000
     return time.strftime(format, time.localtime(timenum))
 
+# 打印直播场次信息
+async def put_live(room_info: dict, pos: int):
+    session = httpx.AsyncClient()
+    try:
+        r = await rac(session.get(room_info['cover']))  # 获取直播封面
+    except Exception as e:
+        # 开了魔法这里会报错
+        toast(f'又是这里报错 Exception: {e} line: {e.__traceback__.tb_lineno}', 0, color='error')
+    put_row([
+        put_image(notice.circle_corner(r.content), format='png'),
+        None,
+        put_column([
+            put_markdown('### {username} {title}'.format_map(room_info)),
+            put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y/%m/%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y/%m/%d %H:%M:%S")}__')
+        ])
+    ], size='10fr 1fr 30fr', scope='query_scope').onclick(partial(reload_live, room_info=room_info, url=f'http://localhost:5762/live/{room_info["room"]}/{pos}', pos=pos))
+
+async def reload_live(room_info, url: str, pos: int):
+    clear('query_scope')
+    put_markdown('弹幕加载中', scope='query_scope')
+    session = httpx.AsyncClient()
+    with put_loading('border', 'primary'):
+        resp = await rac(session.get(url))
+        js = resp.json()
+        if js['status'] != 0:
+            toast('运行时错误：'+js['status'], 3, color='error')
+            return
+        danmaku = js['live']['danmaku']
+        clear('query_scope')
+    await put_live(room_info, pos)
+    temp = '%s <a href="https://space.bilibili.com/%d">%s</a> %s\n\n'
+    danma_str = ''.join([temp % (t2s(dm["time"]), dm["uid"], dm["username"], dm["msg"]) for dm in danmaku])
+    put_markdown(danma_str, scope='query_scope')
+
+# 打印弹幕列表
+async def put_danmaku(room_info: dict, danmaku: list, flag: bool = False):
+    await put_live(room_info, danmaku)  # 先打印直播信息
+    if flag:
+        danma_str = '\n\n'.join([f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}'
+                                    for dm in danmaku])
+        put_markdown(danma_str, scope='query_scope')
+        put_markdown('---', scope='query_scope')
+
 # 按钮点击事件
 async def onclick(btn):
-
-    # 打印直播场次信息
-    async def put_live(room_info: dict, pos: int):
-        try:
-            r = await rac(session.get(room_info['cover']))  # 获取直播封面
-        except Exception as e:
-            # 开了魔法这里会报错
-            toast(f'又是这里报错 Exception: {e} line: {e.__traceback__.tb_lineno}', 0, color='error')
-        put_row([
-            put_image(notice.circle_corner(r.content), format='png'),
-            None,
-            put_column([
-                put_markdown('### {username} {title}'.format_map(room_info)),
-                put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y/%m/%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y/%m/%d %H:%M:%S")}__')
-            ])
-        ], size='10fr 1fr 30fr', scope='query_scope').onclick(partial(reload_live, room_info=room_info, url=f'http://localhost:5762/live/{room_info["room"]}/{pos}', pos=pos))
-
-    async def reload_live(room_info, url: str, pos: int):
-        clear('query_scope')
-        put_markdown('弹幕加载中', scope='query_scope')
-        with put_loading('border', 'primary'):
-            resp = await rac(session.get(url))
-            js = resp.json()
-            if js['status'] != 0:
-                toast('运行时错误：'+js['status'], 3, color='error')
-                return
-            danmaku = js['live']['danmaku']
-            clear('query_scope')
-        await put_live(room_info, pos)
-        temp = '%s <a href="https://space.bilibili.com/%d">%s</a> %s\n\n'
-        danma_str = ''.join([temp % (t2s(dm["time"]), dm["uid"], dm["username"], dm["msg"]) for dm in danmaku])
-        put_markdown(danma_str, scope='query_scope')
-
-    # 打印弹幕列表
-    async def put_danmaku(room_info: dict, danmaku: list, flag: bool = False):
-        await put_live(room_info, danmaku)  # 先打印直播信息
-        if flag:
-            danma_str = '\n\n'.join([f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}'
-                                        for dm in danmaku])
-            put_markdown(danma_str, scope='query_scope')
-            put_markdown('---', scope='query_scope')
-
     clear('query_scope')
     session = httpx.AsyncClient()
     try:
@@ -135,7 +136,10 @@ async def cha():
     put_image(esu, format='png').onclick(partial(run_js, code_='window.open().location="https://www.bilibili.com/video/BV1pR4y1W7M7";')),
     put_buttons(['😋查发言', '🍜查直播'], onclick=onclick),
     put_scope('query_scope')
-
+    session = httpx.AsyncClient()
+    resp = await session.get('http://localhost:5762/rooms')
+    for room in resp.json()['rooms']:
+        await put_live(room, 0)
 
 async def about():
     '关于'
@@ -158,7 +162,9 @@ def eyes():
     file_like = open('eyes.png', mode="rb")
     return StreamingResponse(file_like, media_type="image/jpg")
 
-app.mount('/', FastAPI(routes=webio_routes({'index': cha, 'about': about})))  # 绑定应用到网页根目录, cdn='/html'
+from night.app import index as night, admin
+app.mount('/', FastAPI(routes=webio_routes({'index': cha, 'about': about, 'night': night, 'admin': admin})))
 
 if __name__ == '__main__':
-    uvicorn.run(app='cha:app', host="0.0.0.0", port=443, ssl_keyfile='../api/8032637_api.drelf.cn.key', ssl_certfile='../api/8032637_api.drelf.cn.pem')
+    uvicorn.run(app='cha:app', host="0.0.0.0", port=80)
+    # uvicorn.run(app='cha:app', host="0.0.0.0", port=443, ssl_keyfile='../api/8032637_api.drelf.cn.key', ssl_certfile='../api/8032637_api.drelf.cn.pem')

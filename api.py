@@ -40,6 +40,12 @@ def cha_lives(roomid: int, q: Optional[str] = None):
         return {'status': '房间号不正确'}
 
 
+# 返回所有监控中房间的最近一次直播数据(无弹幕)
+@app.get("/rooms")
+def cha_lives():
+    return {'status': 0, 'rooms': liveDB.rooms}
+
+
 # 查具体某场直播数据(有弹幕)
 @app.get("/live/{roomid}/{pos}")
 def cha_live(roomid: int, pos: str, q: Optional[str] = None):
