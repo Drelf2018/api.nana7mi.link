@@ -17,7 +17,7 @@ from . import exface
 from .bili import BILI
 from .linkedlist import LinkedList
 from .config import get_configs, loads, dumps
-from .database import userDB, configDB
+from .liteDB import userDB, configDB
 
 logger = Logger('MAIN', DEBUG)
 handler = StreamHandler()

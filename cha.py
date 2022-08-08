@@ -1,7 +1,9 @@
 ﻿import random
 import time
 from functools import partial
-
+from io import BytesIO
+import os
+from typing import Optional
 import httpx
 import uvicorn
 from fastapi import FastAPI
@@ -40,21 +42,28 @@ def t2s(timenum: int, format: str = '%H:%M:%S') -> str:
     return time.strftime(format, time.localtime(timenum))
 
 # 打印直播场次信息
-async def put_live(room_info: dict, pos: int):
-    session = httpx.AsyncClient()
-    try:
-        r = await rac(session.get(room_info['cover']))  # 获取直播封面
-    except Exception as e:
-        # 开了魔法这里会报错
-        toast(f'又是这里报错 Exception: {e} line: {e.__traceback__.tb_lineno}', 0, color='error')
-    put_row([
-        put_image(notice.circle_corner(r.content), format='png'),
-        None,
-        put_column([
-            put_markdown('### {username} {title}'.format_map(room_info)),
-            put_markdown(f'<font color="grey">开始</font> __{t2s(room_info["st"], "%Y/%m/%d %H:%M:%S")}__ <font color="grey">结束</font> __{t2s(room_info["sp"], "%Y/%m/%d %H:%M:%S")}__')
-        ])
-    ], size='10fr 1fr 30fr', scope='query_scope').onclick(partial(reload_live, room_info=room_info, url=f'http://localhost:5762/live/{room_info["room"]}/{pos}', pos=pos))
+def put_live(room_info: dict, pos: int):
+    if not os.path.exists('cover\\{room}_{st}.png'.format_map(room_info)):
+        try:
+            if room_info['cover']:
+                r = httpx.get(room_info['cover'])  # 获取直播封面
+                img = Image.open(BytesIO(r.content))
+                img = img.resize((200, int(img.height*200/img.width)))
+                img.save('cover\\{room}_{st}.png'.format_map(room_info))
+        except Exception as e:
+            # 开了魔法这里会报错
+            toast(f'又是这里报错 Exception: {e} line: {e.__traceback__.tb_lineno}', 0, color='error')
+    room_info["rst"], room_info["rsp"] = t2s(room_info["st"], "%Y/%m/%d %H:%M:%S"), t2s(room_info["sp"], "%Y/%m/%d %H:%M:%S")
+    put_html('''
+    <div style="display: grid; grid-auto-flow: column; grid-template-columns: 10fr 1fr 30fr;" class="pywebio-clickable">
+        <a href="{cover}"><img src="/cover/{room}/{st}" alt></a>
+        <div></div>
+        <div style="display: grid; grid-auto-flow: row; grid-template-rows: 1fr 1fr;">
+            <h3 id="{username}-{title}">{username} {title}</h3>
+            <p><font color="grey">开始</font> <strong>{rst}</strong> <font color="grey">结束</font> <strong>{rsp}</strong></p>
+        </div>
+    </div>
+    '''.format_map(room_info), scope='query_scope').onclick(partial(reload_live, room_info=room_info, url=f'http://localhost:5762/live/{room_info["room"]}/{pos}', pos=pos))
 
 async def reload_live(room_info, url: str, pos: int):
     clear('query_scope')
@@ -68,14 +77,14 @@ async def reload_live(room_info, url: str, pos: int):
             return
         danmaku = js['live']['danmaku']
         clear('query_scope')
-    await put_live(room_info, pos)
+    put_live(room_info, pos)
     temp = '%s <a href="https://space.bilibili.com/%d">%s</a> %s\n\n'
     danma_str = ''.join([temp % (t2s(dm["time"]), dm["uid"], dm["username"], dm["msg"]) for dm in danmaku])
     put_markdown(danma_str, scope='query_scope')
 
 # 打印弹幕列表
 async def put_danmaku(room_info: dict, danmaku: list, flag: bool = False):
-    await put_live(room_info, danmaku)  # 先打印直播信息
+    put_live(room_info, danmaku)  # 先打印直播信息
     if flag:
         danma_str = '\n\n'.join([f'{t2s(dm["time"])} <a href="https://space.bilibili.com/{dm["uid"]}">{dm["username"]}</a> {dm["msg"]}'
                                     for dm in danmaku])
@@ -136,10 +145,14 @@ async def cha():
     put_image(esu, format='png').onclick(partial(run_js, code_='window.open().location="https://www.bilibili.com/video/BV1pR4y1W7M7";')),
     put_buttons(['😋查发言', '🍜查直播'], onclick=onclick),
     put_scope('query_scope')
-    session = httpx.AsyncClient()
-    resp = await session.get('http://localhost:5762/rooms')
-    for room in resp.json()['rooms']:
-        await put_live(room, 0)
+    try:
+        session = httpx.AsyncClient()
+        resp = await rac(session.get('http://localhost:5762/rooms'))
+        for room in resp.json()['rooms']:
+            put_live(room, -1)
+    except Exception as e:
+        print(e, e.__traceback__.tb_lineno)
+        toast(f'运行时错误: {e.__traceback__.tb_lineno} {e} {room}', 3, color='error')
 
 async def about():
     '关于'
@@ -162,9 +175,18 @@ def eyes():
     file_like = open('eyes.png', mode="rb")
     return StreamingResponse(file_like, media_type="image/jpg")
 
+# 查具体某场直播数据(有弹幕)
+@app.get("/cover/{roomid}/{st}")
+def cover(roomid: int, st: int, q: Optional[str] = None):
+    try:
+        file_like = open(f'cover\\{roomid}_{st}.png', mode="rb")
+        return StreamingResponse(file_like, media_type="image/jpg")
+    except Exception:
+        return {'status': '未找到封面'}
+
 from night.app import index as night, admin
 app.mount('/', FastAPI(routes=webio_routes({'index': cha, 'about': about, 'night': night, 'admin': admin})))
 
 if __name__ == '__main__':
-    uvicorn.run(app='cha:app', host="0.0.0.0", port=80)
-    # uvicorn.run(app='cha:app', host="0.0.0.0", port=443, ssl_keyfile='../api/8032637_api.drelf.cn.key', ssl_certfile='../api/8032637_api.drelf.cn.pem')
+    # uvicorn.run(app='cha:app', host="0.0.0.0", port=80)
+    uvicorn.run(app='cha:app', host="0.0.0.0", port=443, ssl_keyfile='../api/8032637_api.drelf.cn.key', ssl_certfile='../api/8032637_api.drelf.cn.pem')

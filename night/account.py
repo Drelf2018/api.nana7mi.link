@@ -1,4 +1,4 @@
-from night.database import userDB
+from night.liteDB import userDB
 from pywebio.session import eval_js, run_js
 from tornado.web import create_signed_value, decode_signed_value
 

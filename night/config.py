@@ -1,7 +1,7 @@
 from pywebio.output import *
 from pywebio.input import textarea
 from pywebio.session import run_js, local
-from night.database import userDB, configDB
+from night.liteDB import userDB, configDB
 from night.night import night
 from json import loads, dumps
 from bilibili_api import Credential
