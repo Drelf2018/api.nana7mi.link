@@ -38,6 +38,7 @@ class BILI:
 
     def __init__(self, uid, cookies):
         self.uid = uid
+        self.session = None
         self.cookies = {
             'sessdata': cookies[0],
             'bili_jct': cookies[1],

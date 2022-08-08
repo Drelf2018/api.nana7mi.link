@@ -50,6 +50,29 @@ for root, folders, files in os.walk('./notice_pic'):
 def notice():
     return [
         put_row([
+            put_image(PICS['notice.8.9.png']),
+            None,
+            put_markdown('''## 📢 08月09日00:20临时不停机更新公告
+
+            感谢您对《api.nana7mi.link》的关注与支持。我们计划将于2022年08月09日00:20进行服务器不停机更新。本次更新不会影响用户正常查询进程，更新结束后，用户只需选择合适时间重启网站即可完成更新。
+
+            更新时间：
+            2022年08月09日00:20
+
+            更新说明：
+            本次更新为版本更新，前期 Gramma 测试时的数据已被移除。
+
+            更新内容：
+            ◆ 移除了Database - Adapter - Biligo - Web 沟通连接模式。
+            ◆ 适配器与数据库分离，Biligo 自动保存弹幕数据至数据库。
+            ◆ 前后端分离，前端网页通过访问本地 api 接口获取数据。
+            ◆ 优化主页，并新增监控中直播间状态展示。
+            ◆ 优化查询结构，速度大大提升。
+            ◆ 新增 http 自动跳转 https 。
+            ◆ 前后端分离了但也没分离，因为我懒得每次开三个窗口。所以我直接用多线程同时启动 api 服务、跳转服务和网页服务。''')
+        ], size='18fr 1fr 24fr'),
+        put_markdown('---'),
+        put_row([
             put_image(PICS['notice.6.13.png']),
             None,
             put_markdown('''## 📢 06月13日01:10临时不停机更新公告

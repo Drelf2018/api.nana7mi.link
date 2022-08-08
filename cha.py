@@ -1,9 +1,12 @@
-﻿import random
+﻿import os
+import random
+import subprocess
+import threading
 import time
 from functools import partial
 from io import BytesIO
-import os
 from typing import Optional
+
 import httpx
 import uvicorn
 from fastapi import FastAPI
@@ -12,9 +15,13 @@ from PIL import Image
 from pywebio.input import *
 from pywebio.output import *
 from pywebio.platform.fastapi import webio_routes
-from pywebio.session import eval_js, run_js, run_asyncio_coroutine as rac
+from pywebio.session import eval_js
+from pywebio.session import run_asyncio_coroutine as rac
+from pywebio.session import run_js
 
 import notice
+from night.app import admin
+from night.app import index as night
 
 app = FastAPI()
 esu = Image.open('esu.png')  # 查询页面配图
@@ -97,7 +104,7 @@ async def onclick(btn):
     session = httpx.AsyncClient()
     try:
         if btn == '😋查发言':
-            uid = await eval_js('prompt("输入查询用户uid")')
+            uid = await input('输入查询用户 uid')
             if uid and uid.isdigit:
                 try:
                     resp = await rac(session.get(f'http://localhost:5762/uid/{uid}'))
@@ -121,13 +128,16 @@ async def onclick(btn):
                     await put_danmaku(dm['room_info'], dm['danmaku'], True)
 
         elif btn == '🍜查直播':
-            roomid = await eval_js('prompt("输入查询直播间号")')
-            resp = await rac(session.get(f'http://localhost:5762/live/{roomid}'))
-            js = resp.json()
-            if js['status'] == 0:
-                n = len(js['lives']) - 1
-                for pos, live in enumerate(js['lives']):
-                    await put_danmaku(live, danmaku=n-pos)
+            roomid = await input('输入查询直播间号')
+            if roomid and roomid.isdigit:
+                resp = await rac(session.get(f'http://localhost:5762/live/{roomid}'))
+                js = resp.json()
+                if js['status'] == 0:
+                    n = len(js['lives']) - 1
+                    for pos, live in enumerate(js['lives']):
+                        await put_danmaku(live, danmaku=n-pos)
+            else:
+                toast('输入不正确', 3, color='error')
     except Exception as e:
         toast(f'运行时错误：{e}', 3, color='error')
         return
@@ -148,11 +158,14 @@ async def cha():
     try:
         session = httpx.AsyncClient()
         resp = await rac(session.get('http://localhost:5762/rooms'))
-        for room in resp.json()['rooms']:
-            put_live(room, -1)
+        js = resp.json()
+        if isinstance(js['rooms'], list):
+            [put_live(room, -1)for room in js['rooms']]
+        else:
+            toast(f'运行时错误：{js["rooms"]}', 3, color='error')
     except Exception as e:
-        print(e, e.__traceback__.tb_lineno)
-        toast(f'运行时错误: {e.__traceback__.tb_lineno} {e} {room}', 3, color='error')
+        print(e, e.__traceback__.tb_lineno, resp.content)
+        toast(f'运行时错误：{e.__traceback__.tb_lineno} {e}', 3, color='error')
 
 async def about():
     '关于'
@@ -184,9 +197,26 @@ def cover(roomid: int, st: int, q: Optional[str] = None):
     except Exception:
         return {'status': '未找到封面'}
 
-from night.app import index as night, admin
 app.mount('/', FastAPI(routes=webio_routes({'index': cha, 'about': about, 'night': night, 'admin': admin})))
 
+def run_python(filepath: str, port: int, callback=print, hook=print):
+    folder_path = os.path.dirname(filepath)
+    subp = subprocess.Popen('python '+filepath, cwd=folder_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while not subp.poll():
+        try:
+            try:
+                bt = subp.stdout.readline()
+            except ValueError:
+                hook(f'bt = subp.stdout.readline() 这行错了，原因我不清楚，好像是 ValueError ({port})')
+                continue
+            line = str(bt, encoding='utf-8').strip()
+        except UnicodeDecodeError:
+            hook(f'line = str(bt, encoding="utf-8").strip() 这行错了，原因我不清楚，好像是 UnicodeDecodeError ({port})')
+            continue
+        if line:
+            callback(f'{line} ({port})')
+
 if __name__ == '__main__':
-    # uvicorn.run(app='cha:app', host="0.0.0.0", port=80)
+    threading.Thread(target=run_python, args=('.\\api.py', 5762)).start()
+    threading.Thread(target=run_python, args=('.\\http_redirect.py', 80)).start()
     uvicorn.run(app='cha:app', host="0.0.0.0", port=443, ssl_keyfile='../api/8032637_api.drelf.cn.key', ssl_certfile='../api/8032637_api.drelf.cn.pem')
