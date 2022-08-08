@@ -107,7 +107,7 @@ async def onclick(btn):
             uid = await input('输入查询用户 uid')
             if uid and uid.isdigit:
                 try:
-                    resp = await rac(session.get(f'http://localhost:5762/uid/{uid}'))
+                    resp = await rac(session.get(f'http://localhost:5762/uid/{uid}', timeout=20.0))
                 except Exception as e:
                     toast(f'运行时错误：{e}', 3, color='error')
                     return
@@ -130,7 +130,7 @@ async def onclick(btn):
         elif btn == '🍜查直播':
             roomid = await input('输入查询直播间号')
             if roomid and roomid.isdigit:
-                resp = await rac(session.get(f'http://localhost:5762/live/{roomid}'))
+                resp = await rac(session.get(f'http://localhost:5762/live/{roomid}', timeout=20.0))
                 js = resp.json()
                 if js['status'] == 0:
                     n = len(js['lives']) - 1
@@ -157,7 +157,7 @@ async def cha():
     put_scope('query_scope')
     try:
         session = httpx.AsyncClient()
-        resp = await rac(session.get('http://localhost:5762/rooms'))
+        resp = await rac(session.get('http://localhost:5762/rooms', timeout=20.0))
         js = resp.json()
         if isinstance(js['rooms'], list):
             [put_live(room, -1)for room in js['rooms']]
