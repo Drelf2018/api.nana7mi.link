@@ -51,11 +51,16 @@ class DataBase:
         sql = f'SELECT {cmd} FROM {self.table}'
         if kwargs:
             sql += ' WHERE ' + ' AND '.join([f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}" for k, v in kwargs.items()])
-        sql += ' order by time'
+        sql += ' order by '
+        if self.table == 'danmaku':
+            sql += 'time'
+        else:
+            sql += 'st'
         if desc:
             sql += ' desc'
         cursor = conn.cursor()
         if all:
+            print(sql)
             cursor.execute(sql)
             resp = cursor.fetchall()
         else:
@@ -139,9 +144,9 @@ class LiveDB(DataBase):
                 return
             return [self.d2d(d) for d in data]
 
-    @property
     def rooms(self):
         sql = '''
+        DROP TABLE small;
         CREATE TEMP TABLE IF NOT EXISTS small as SELECT roomid, MAX(st) FROM live GROUP BY roomid;
         SELECT
             roomid,cover,username,title,st,sp
@@ -157,7 +162,6 @@ class LiveDB(DataBase):
                     big.st = small.max
             )
         ORDER BY sp DESC;
-        DROP TABLE small;
         '''
         cursor = conn.cursor()
         try:
@@ -165,7 +169,7 @@ class LiveDB(DataBase):
             rooms = cursor.fetchall()
         except Exception as e:
             return str(e)
-        return [{'cover': room[0], 'username': room[1], 'title': room[2], 'st': room[3], 'sp': room[4]} for room in rooms] if rooms else None
+        return [{'room': room[0], 'cover': room[1], 'username': room[2], 'title': room[3], 'st': room[4], 'sp': room[5]} for room in rooms] if rooms else None
 
 danmuDB = DanmuDB()
 liveDB = LiveDB()
