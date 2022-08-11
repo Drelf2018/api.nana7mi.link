@@ -10,18 +10,18 @@ t2s = lambda: time.strftime('`%H:%M:%S` ', time.localtime(time.time()))
 
 class night:
 
-    def __init__(self, cid, loglist: LinkedList, credential, data):
+    def __init__(self, username: str, cid: int, loglist: LinkedList, credential, data):
         self.cid = cid
+        put_markdown(f'{t2s()}配置正在启动', scope=f'{username}_{cid}')
         run_async(self.run(cid, loglist, credential, data))
 
-    async def close(self):
+    async def close(self, username: str):
         self.sched.shutdown()
+        put_markdown(f'{t2s()}配置已经停止', scope=f'{username}_{self.cid}')
         await rac(self.listen_room.disconnect())
-        put_markdown(f'{t2s()}配置已经停止', scope=f'scrollable_{self.cid}')
 
     async def run(self, cid: int, loglist: LinkedList, credential: dict, data: dict):
         '全自动晚安机'
-        put_markdown(f'{t2s()}配置正在启动', scope=f'scrollable_{cid}')
         self.listen_room = LiveDanmaku(int(data['roomid']), credential=credential)  # 接收弹幕, debug=True
         send_room = LiveRoom(int(data['roomid']), credential)  # 发送弹幕
         self.sched = AsyncIOScheduler(timezone='Asia/Shanghai')  # 定时检测密度的任务调度器
@@ -78,8 +78,14 @@ class night:
 
         @self.sched.scheduled_job('interval', id='reconnection', hours=0.5)  # , next_run_time=datetime.datetime.now()
         async def reconnection():
-            await self.listen_room.disconnect()
-            await self.listen_room.connect()
+            try:
+                await self.listen_room.disconnect()
+            except Exception:
+                ...
+            try:
+                await self.listen_room.connect()
+            except Exception as e:
+                print(f'连接直播间时错误: {e}')
 
         # 运行
         self.sched.start()

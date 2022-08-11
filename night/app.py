@@ -216,7 +216,7 @@ async def index():
     await main(username, ip)
 
 
-async def refresh_msg(loglist: LinkedList, scope=None):
+async def refresh_msg(loglist: LinkedList, username: str = None, scope=None):
     sleeptime = 1
     local.loglist = loglist
     node = loglist.getTrueHead()
@@ -231,10 +231,10 @@ async def refresh_msg(loglist: LinkedList, scope=None):
                 else:
                     cid, msg = node.getValue()
                     if '/ s`' in msg:
-                        clear(f'scrollable_{cid}_hb')
-                        put_markdown(msg, sanitize=True, scope=f'scrollable_{cid}_hb').style('border-bottom: none')
+                        clear(f'{username}_{cid}_hb')
+                        put_markdown(msg, sanitize=True, scope=f'{username}_{cid}_hb').style('border-bottom: none')
                     else:
-                        put_markdown(msg, sanitize=True, scope=f'scrollable_{cid}')
+                        put_markdown(msg, sanitize=True, scope=f'{username}_{cid}')
             except Exception as e:
                 print('error', msg)
                 toast(f'msg error: {e}', 3, color='error')
@@ -270,7 +270,7 @@ async def main(username: str, ip: str):
 
     put_button('添加配置', onclick=lambda: new_config(username))
     
-    run_async(refresh_msg(loglist))
+    run_async(refresh_msg(loglist, username))
 
 
 async def admin():

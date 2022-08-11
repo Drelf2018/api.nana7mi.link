@@ -20,10 +20,10 @@ async def on_click(btn: str, data):
         task = tasks[username].get(cid)
         if code == 'run':
             if not task:
-                tasks[username][cid] = night(cid, local.loglist, tasks[username]['credential'], data)
+                tasks[username][cid] = night(username, cid, local.loglist, tasks[username]['credential'], data)
         elif code == 'close':
             if task:
-                await task.close()
+                await task.close(username)
                 del tasks[username][cid]
     except Exception as e:
         print(e, e.__traceback__.tb_lineno)
@@ -64,9 +64,9 @@ def get_configs(username, cids):
                                     {'label': '■', 'color': 'danger', 'value': f'{username}.{cid}.close'}
                                 ], onclick=partial(on_click, data=js)),
                                 None,
-                                put_scope(f'scrollable_{cid}_hb')
+                                put_scope(f'{username}_{cid}_hb')
                             ], size='auto 1fr auto'),
-                            put_scrollable(put_scope(f'scrollable_{cid}'), height=200, keep_bottom=True)
+                            put_scrollable(put_scope(f'{username}_{cid}'), height=200, keep_bottom=True)
                         ]
                     },
                     {'title': '源代码', 'content': [put_code(data, 'json')] + [
