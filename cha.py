@@ -219,4 +219,4 @@ def run_python(filepath: str, port: int, callback=print, hook=print):
 if __name__ == '__main__':
     threading.Thread(target=run_python, args=('.\\api.py', 5762)).start()
     threading.Thread(target=run_python, args=('.\\http_redirect.py', 80)).start()
-    uvicorn.run(app='cha:app', host="0.0.0.0", port=443, ssl_keyfile='../api/8032637_api.drelf.cn.key', ssl_certfile='../api/8032637_api.drelf.cn.pem')
+    uvicorn.run(app='cha:app', host="0.0.0.0", port=443, ssl_keyfile='../api/api.nana7mi.link.key', ssl_certfile='../api/api.nana7mi.link.pem')
