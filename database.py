@@ -117,7 +117,7 @@ class LiveDB(DataBase):
         super().__init__('live')
     
     def update(self, room_id: int, start_time: int, stop_time):
-        super().update({'ROOM': room_id, 'ST': start_time}, SP=stop_time)
+        super().update({'roomid': room_id, 'st': start_time}, SP=stop_time)
 
     def d2d(self, data):
         return {
@@ -149,7 +149,7 @@ class LiveDB(DataBase):
         DROP TABLE small;
         CREATE TEMP TABLE IF NOT EXISTS small as SELECT roomid, MAX(st) FROM live GROUP BY roomid;
         SELECT
-            roomid,cover,username,title,st,sp
+            roomid,cover,username,title,st,sp,uid
         FROM
             live big
         WHERE
@@ -169,7 +169,7 @@ class LiveDB(DataBase):
             rooms = cursor.fetchall()
         except Exception as e:
             return str(e)
-        return [{'room': room[0], 'cover': room[1], 'username': room[2], 'title': room[3], 'st': room[4], 'sp': room[5]} for room in rooms] if rooms else None
+        return [{'room': room[0], 'cover': room[1], 'username': room[2], 'title': room[3], 'st': room[4], 'sp': room[5], 'uid': room[6]} for room in rooms] if rooms else None
 
 danmuDB = DanmuDB()
 liveDB = LiveDB()

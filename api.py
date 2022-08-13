@@ -1,4 +1,5 @@
 import time
+import httpx
 from typing import Optional
 
 import uvicorn
@@ -60,8 +61,15 @@ def cha_live(roomid: int, pos: str, q: Optional[str] = None):
     except Exception as e:
         return {'status': '应该是超出总场次数了', 'exception': str(e)}
     if live:
-        if not live['sp']:  # 直播中
-            live['sp'] = round(time.time())
+        if not live['sp']:  # 直播中 或者没记录到下播弹幕
+            # 如果没记录到下播 去 matsuri.icu 查一下有没有下播
+            resp = httpx.get('http://43.138.71.81:5763/matsuri/{uid}/{st}'.format_map(live), timeout=20.0)
+            js = resp.json()
+            if js['status'] == 1:  
+                live['sp'] = js['clip']['end_time'] // 1000
+                liveDB.update(roomid, live['st'], live['sp'])
+            else:
+                live['sp'] = round(time.time())
         # 统计弹幕数，礼物、大航海、SuperChat 等金额
         live.update({'total': 0, 'send_gift': 0, 'guard_buy': 0, 'super_chat_message': 0})
         live['danmaku'] = list(danmuDB.query_room(roomid, live['st'], live['sp']))

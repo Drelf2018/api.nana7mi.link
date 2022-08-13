@@ -63,7 +63,7 @@ def put_live(room_info: dict, pos: int):
     room_info["rst"], room_info["rsp"] = t2s(room_info["st"], "%Y/%m/%d %H:%M:%S"), t2s(room_info["sp"], "%Y/%m/%d %H:%M:%S")
     put_html('''
     <div style="display: grid; grid-auto-flow: column; grid-template-columns: 10fr 1fr 30fr;" class="pywebio-clickable">
-        <a href="{cover}"><img src="/cover/{room}/{st}" alt></a>
+        <a href="{cover}"><img src="/cover/{room}/{st}" alt width="196px" style="border-radius:10px"></a>
         <div></div>
         <div style="display: grid; grid-auto-flow: row; grid-template-rows: 1fr 1fr;">
             <h3 id="{username}-{title}">{username} {title}</h3>
@@ -77,7 +77,7 @@ async def reload_live(room_info, url: str, pos: int):
     put_markdown('弹幕加载中', scope='query_scope')
     session = httpx.AsyncClient()
     with put_loading('border', 'primary'):
-        resp = await rac(session.get(url))
+        resp = await rac(session.get(url, timeout=20.0))
         js = resp.json()
         if js['status'] != 0:
             toast('运行时错误：'+js['status'], 3, color='error')
