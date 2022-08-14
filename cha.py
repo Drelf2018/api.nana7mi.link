@@ -20,8 +20,6 @@ from pywebio.session import run_asyncio_coroutine as rac
 from pywebio.session import run_js
 
 import notice
-from night.app import admin
-from night.app import index as night
 
 app = FastAPI()
 esu = Image.open('esu.png')  # 查询页面配图
@@ -151,7 +149,7 @@ async def cha():
         '还什么都没有更新，不要急好嘛',
         '直播只是工作吗直播只是工作吗直播只是工作吗？'
     ]
-    put_markdown(f'# 😎 api.nana7mi.link <font color="grey" size=4>*{random.choice(quotations)}*</font>')
+    put_markdown(f'# 😎 nana7mi.link <font color="grey" size=4>*{random.choice(quotations)}*</font>')
     put_image(esu, format='png').onclick(partial(run_js, code_='window.open().location="https://www.bilibili.com/video/BV1pR4y1W7M7";')),
     put_buttons(['😋查发言', '🍜查直播'], onclick=onclick),
     put_scope('query_scope')
@@ -197,26 +195,8 @@ def cover(roomid: int, st: int, q: Optional[str] = None):
     except Exception:
         return {'status': '未找到封面'}
 
-app.mount('/', FastAPI(routes=webio_routes({'index': cha, 'about': about, 'night': night, 'admin': admin})))
-
-def run_python(filepath: str, port: int, callback=print, hook=print):
-    folder_path = os.path.dirname(filepath)
-    subp = subprocess.Popen('python '+filepath, cwd=folder_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    while not subp.poll():
-        try:
-            try:
-                bt = subp.stdout.readline()
-            except ValueError:
-                hook(f'bt = subp.stdout.readline() 这行错了，原因我不清楚，好像是 ValueError ({port})')
-                continue
-            line = str(bt, encoding='utf-8').strip()
-        except UnicodeDecodeError:
-            hook(f'line = str(bt, encoding="utf-8").strip() 这行错了，原因我不清楚，好像是 UnicodeDecodeError ({port})')
-            continue
-        if line:
-            callback(f'{line} ({port})')
+app.mount('/', FastAPI(routes=webio_routes({'index': cha, 'about': about})))
 
 if __name__ == '__main__':
-    threading.Thread(target=run_python, args=('.\\api.py', 5762)).start()
-    threading.Thread(target=run_python, args=('.\\http_redirect.py', 80)).start()
-    uvicorn.run(app='cha:app', host="0.0.0.0", port=443, ssl_keyfile='../api/api.nana7mi.link.key', ssl_certfile='../api/api.nana7mi.link.pem')
+    uvicorn.run(app='cha:app', host="0.0.0.0", port=5761)
+    # , ssl_keyfile='../api/nana7mi.link.key', ssl_certfile='../api/nana7mi.link.pem'
