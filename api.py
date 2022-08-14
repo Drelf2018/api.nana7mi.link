@@ -5,6 +5,7 @@ from typing import Optional
 import uvicorn
 from database import danmuDB, liveDB
 from fastapi import FastAPI
+from starlette.responses import HTMLResponse
 
 app = FastAPI()
 
@@ -65,9 +66,12 @@ def cha_live(roomid: int, pos: str, q: Optional[str] = None):
             # 如果没记录到下播 去 matsuri.icu 查一下有没有下播
             resp = httpx.get('http://43.138.71.81:5763/matsuri/{uid}/{st}'.format_map(live), timeout=20.0)
             js = resp.json()
-            if js['status'] == 1:  
-                live['sp'] = js['clip']['end_time'] // 1000
-                liveDB.update(roomid, live['st'], live['sp'])
+            if js['status'] == 1:
+                if js['clip']['end_time']:
+                    live['sp'] = js['clip']['end_time'] // 1000
+                    liveDB.update(roomid, live['st'], live['sp'])
+                else:
+                    live['sp'] = round(time.time())
             else:
                 live['sp'] = round(time.time())
         # 统计弹幕数，礼物、大航海、SuperChat 等金额
@@ -82,6 +86,29 @@ def cha_live(roomid: int, pos: str, q: Optional[str] = None):
     else:
         return {'status': '房间号不正确'}
 
+@app.get('/')
+async def hello():
+    return HTMLResponse('''<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link href="https://example-static.oss-cn-beijing.aliyuncs.com/web-framework/style.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<div class="website">
+    <div class="ri-t">
+        <h1>你好李鑫</h1>
+        <h2>这是一个 FastAPI 项目：api.nana7mi.link</h2>
+        <span>通过 Nginx 进行部署</span>
+        <br/>
+        <p>了解更多，您可以：<br/>
+            • 访问代码仓库 github.com/Drelf2018/api.nana7mi.link<br/>
+            • 阅读 FastAPI 自动生成文档：/docs<br/>
+        </p>
+    </div>
+</div>
+</body>
+</html>
+''')
 
 if __name__ == '__main__':
     uvicorn.run(app='api:app', host="0.0.0.0", port=5762)
