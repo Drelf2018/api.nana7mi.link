@@ -145,24 +145,24 @@ class LiveDB(DataBase):
             return [self.d2d(d) for d in data]
 
     def rooms(self):
-        sql = '''
-        DROP TABLE small;
-        CREATE TEMP TABLE IF NOT EXISTS small as SELECT roomid, MAX(st) FROM live GROUP BY roomid;
+        table_name = f'tb{int(time.time())}'
+        print(table_name)
+        sql = f'''CREATE TEMP TABLE {table_name} as SELECT roomid, MAX(st) FROM live GROUP BY roomid;
+SELECT
+    roomid,cover,username,title,st,sp,uid
+FROM
+    live big
+WHERE
+    big.roomid = (
         SELECT
-            roomid,cover,username,title,st,sp,uid
+            {table_name}.roomid
         FROM
-            live big
+            {table_name}
         WHERE
-            big.roomid = (
-                SELECT
-                    small.roomid
-                FROM
-                    small
-                WHERE
-                    big.st = small.max
-            )
-        ORDER BY sp DESC;
-        '''
+            big.st = {table_name}.max
+    )
+ORDER BY sp DESC;
+'''
         cursor = conn.cursor()
         try:
             cursor.execute(sql)
