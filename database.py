@@ -1,5 +1,10 @@
+import datetime
+import logging
 import time
+
+import httpx
 import psycopg2
+from apscheduler.schedulers.background import BackgroundScheduler
 from psycopg2 import extras as ex
 
 
@@ -26,12 +31,17 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS public.live
     st bigint,
     sp bigint
 )''')
-
+cursor.execute('''CREATE TABLE IF NOT EXISTS public.data
+(
+    username text COLLATE pg_catalog."default",
+    uid bigint,
+    roomid bigint,
+    time bigint,
+    follower bigint,
+    guardNum bigint
+)''')
 
 class DataBase:
-    def __init__(self, table: str):
-        self.table = table if table else 'danmaku'
-
     def insert(self, **kwargs):
         keys = ", ".join(kwargs.keys())
         vals = ", ".join([f'%({key})s' for key in list(kwargs.keys())])
@@ -60,7 +70,6 @@ class DataBase:
             sql += ' desc'
         cursor = conn.cursor()
         if all:
-            print(sql)
             cursor.execute(sql)
             resp = cursor.fetchall()
         else:
@@ -89,11 +98,10 @@ class DataBase:
 
 
 class DanmuDB(DataBase):
-    def __init__(self):
-        super().__init__('danmaku')
+    table = 'danmaku'
 
     def insert(self, data):
-        sql = f'INSERT INTO {self.table} (roomid,time,username,uid,msg,cmd,price,st) VALUES %s;'
+        sql = 'INSERT INTO danmaku (roomid,time,username,uid,msg,cmd,price,st) VALUES %s;'
         ex.execute_values(cursor, sql, data)
         self.save()
 
@@ -113,24 +121,21 @@ class DanmuDB(DataBase):
 
 
 class LiveDB(DataBase):
-    def __init__(self):
-        super().__init__('live')
+    table = 'live'
     
     def update(self, room_id: int, start_time: int, stop_time):
         super().update({'roomid': room_id, 'st': start_time}, SP=stop_time)
 
-    def d2d(self, data):
-        return {
-            'room': data[0],
-            'username': data[1],
-            'uid': data[2],
-            'title': data[3],
-            'cover': data[4],
-            'st': data[5],
-            'sp': data[6]
-        }
-
     def query(self, room_id: int = None, start_time: int = 0, all=False):
+        parse = lambda data: {
+            'room':     data[0],
+            'username': data[1],
+            'uid':      data[2],
+            'title':    data[3],
+            'cover':    data[4],
+            'st':       data[5],
+            'sp':       data[6]
+        }
         params = {'roomid': room_id}
         if start_time:
             params.update({'st': start_time})
@@ -138,15 +143,14 @@ class LiveDB(DataBase):
         if not all:
             if not data:
                 return
-            return self.d2d(data)
+            return parse(data)
         else:
             if not data[0]:
                 return
-            return [self.d2d(d) for d in data]
+            return [parse(d) for d in data]
 
     def rooms(self):
         table_name = f'tb{int(time.time())}'
-        print(table_name)
         sql = f'''CREATE TEMP TABLE {table_name} as SELECT roomid, MAX(st) FROM live GROUP BY roomid;
 SELECT
     roomid,cover,username,title,st,sp,uid
@@ -170,7 +174,50 @@ ORDER BY sp DESC;
             conn.cursor().execute(f'DROP TABLE {table_name};')
         except Exception as e:
             return str(e)
-        return [{'room': room[0], 'cover': room[1], 'username': room[2], 'title': room[3], 'st': room[4], 'sp': room[5], 'uid': room[6]} for room in rooms] if rooms else None
+        parse = lambda room: {
+            'room':     room[0],
+            'cover':    room[1],
+            'username': room[2],
+            'title':    room[3],
+            'st':       room[4],
+            'sp':       room[5],
+            'uid':      room[6]
+        }
+        return [parse(room) for room in rooms] if rooms else None
+
+class DataDB(DataBase):
+    table = 'data'
 
 danmuDB = DanmuDB()
 liveDB = LiveDB()
+dataDB = DataDB()
+sched = BackgroundScheduler(timezone="Asia/Shanghai")
+logger = logging.getLogger('sched')
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s", '%H:%M:%S'))
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+@sched.scheduled_job('interval', hours=1, next_run_time=datetime.datetime.now())
+def heartbeat():
+    BASEURL = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom?room_id={room}'
+    for room in liveDB.rooms():
+        resp = httpx.get(BASEURL.format_map(room))
+        js = resp.json()
+        data = js['data']
+        if data:
+            dataDB.insert(
+                username=room['username'],
+                uid=room['uid'],
+                roomid=room['room'],
+                time=int(time.time()),
+                follower=data['anchor_info']['relation_info']['attention'],
+                guardNum=data['guard_info']['count']
+            )
+            logger.debug('更新'+room['username']+'数据成功')
+        else:
+            logger.error('更新'+room['username']+'数据失败')
+        time.sleep(3)
+    logger.info('全部更新完毕')
+
+sched.start()
