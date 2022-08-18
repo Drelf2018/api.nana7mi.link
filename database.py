@@ -153,7 +153,7 @@ SELECT
 FROM
     live big
 WHERE
-    big.roomid = (
+    big.roomid in (
         SELECT
             {table_name}.roomid
         FROM
@@ -167,6 +167,7 @@ ORDER BY sp DESC;
         try:
             cursor.execute(sql)
             rooms = cursor.fetchall()
+            conn.cursor().execute(f'DROP TABLE {table_name};')
         except Exception as e:
             return str(e)
         return [{'room': room[0], 'cover': room[1], 'username': room[2], 'title': room[3], 'st': room[4], 'sp': room[5], 'uid': room[6]} for room in rooms] if rooms else None
