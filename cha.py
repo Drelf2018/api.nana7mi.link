@@ -199,4 +199,3 @@ app.mount('/', FastAPI(routes=webio_routes({'index': cha, 'about': about})))
 
 if __name__ == '__main__':
     uvicorn.run(app='cha:app', host="0.0.0.0", port=5761)
-    # , ssl_keyfile='../api/nana7mi.link.key', ssl_certfile='../api/nana7mi.link.pem'
