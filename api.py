@@ -3,7 +3,7 @@ import httpx
 from typing import Optional
 
 import uvicorn
-from database import danmuDB, liveDB
+from database import danmuDB, liveDB, dataDB
 from fastapi import FastAPI
 from starlette.responses import HTMLResponse
 
@@ -58,7 +58,7 @@ def cha_live(roomid: int, pos: str, q: Optional[str] = None):
     else:
         return {'status': '场次码不正确'}
     try:
-        live = liveDB.query(room_id=roomid, all=True)[pos]
+        live: dict = liveDB.query(room_id=roomid, all=True)[pos]
     except Exception as e:
         return {'status': '应该是超出总场次数了', 'exception': str(e)}
     if live:
@@ -82,6 +82,7 @@ def cha_live(roomid: int, pos: str, q: Optional[str] = None):
                 live['total'] += 1
             else:
                 live[dm['type'].lower()] += dm['price']
+        live['dataMap'] = dataDB.query(roomid)
         return {'status': 0, 'live':live}
     else:
         return {'status': '房间号不正确'}

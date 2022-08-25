@@ -188,6 +188,21 @@ ORDER BY sp DESC;
 class DataDB(DataBase):
     table = 'data'
 
+    def query(self, roomid: int):
+        dataMap = dict()
+        sql = f'SELECT time,follower,guardNum FROM data WHERE roomid = {roomid} order by time desc'
+        cursor = conn.cursor()
+        try:
+            cursor.execute(sql)
+            datas = cursor.fetchmany(100)
+            for timestamp, fans, guard in datas:
+                s = time.strftime('%m/%d', time.localtime(timestamp))
+                if not dataMap.get(s):
+                    dataMap[s] = {'follower': fans, 'guardNum': guard}
+            return dataMap
+        except Exception:
+            return dict()
+
 danmuDB = DanmuDB()
 liveDB = LiveDB()
 dataDB = DataDB()
