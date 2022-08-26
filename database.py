@@ -194,11 +194,13 @@ class DataDB(DataBase):
         cursor = conn.cursor()
         try:
             cursor.execute(sql)
-            datas = cursor.fetchmany(100)
+            datas = cursor.fetchmany(170)
             for timestamp, fans, guard in datas:
                 s = time.strftime('%m/%d', time.localtime(timestamp))
                 if not dataMap.get(s):
                     dataMap[s] = {'follower': fans, 'guardNum': guard}
+                    if len(dataMap) >= 7:
+                        break
             return dataMap
         except Exception:
             return dict()
