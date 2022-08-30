@@ -1,56 +1,18 @@
 from pywebio.output import *
-from PIL import Image, ImageDraw
+from PIL import Image
 import os
-from io import BytesIO
-
-
-def circle_corner(img: Image.Image, radii=0):  # 把原图片变成圆角，这个函数是从网上找的
-    """
-    圆角处理
-    :param img: 源图象。
-    :param radii: 半径，如：30。
-    :return: 返回一个圆角处理后的图象。
-    """
-    if not isinstance(img, Image.Image):
-        img = Image.open(BytesIO(img))
-    if radii == 0:
-        radii = int(0.1*img.height)
-    else:
-        radii = int(radii)
-    # 画圆（用于分离4个角）
-    circle = Image.new('L', (radii * 2, radii * 2), 0)  # 创建一个黑色背景的画布
-    draw = ImageDraw.Draw(circle)
-    draw.ellipse((0, 0, radii * 2, radii * 2), fill=255)  # 画白色圆形
-
-    # 原图
-    img = img.convert("RGBA")
-    w, h = img.size
-
-    # 画4个角（将整圆分离为4个部分）
-    alpha = Image.new('L', img.size, 255)
-    alpha.paste(circle.crop((0, 0, radii, radii)), (0, 0))  # 左上角
-    alpha.paste(circle.crop((radii, 0, radii * 2, radii)), (w - radii, 0))  # 右上角
-    alpha.paste(circle.crop((radii, radii, radii * 2, radii * 2)), (w - radii, h - radii))  # 右下角
-    alpha.paste(circle.crop((0, radii, radii, radii * 2)), (0, h - radii))  # 左下角
-
-    img.putalpha(alpha)  # 白色区域透明可见，黑色区域不可见
-    
-    image = Image.new('RGB', size=(w, h), color=(255, 255, 255))
-    image.paste(img, (0, 0), mask=img)
-
-    return image
 
 
 PICS = {}
 for root, folders, files in os.walk('./notice_pic'):
     for file in files:
-        PICS[file] = circle_corner(Image.open(os.path.join(root,file)), 50)
+        PICS[file] = Image.open(os.path.join(root, file))
 
 
 def notice():
     return [
         put_row([
-            put_image(PICS['notice.8.9.png']),
+            put_image(PICS['notice.8.9.png']).style("border-radius:10px"),
             None,
             put_markdown('''## 📢 08月09日00:20临时不停机更新公告
 
@@ -73,7 +35,7 @@ def notice():
         ], size='18fr 1fr 24fr'),
         put_markdown('---'),
         put_row([
-            put_image(PICS['notice.6.13.png']),
+            put_image(PICS['notice.6.13.png']).style("border-radius:10px"),
             None,
             put_markdown('''## 📢 06月13日01:10临时不停机更新公告
 
@@ -95,7 +57,7 @@ def notice():
         ], size='18fr 1fr 24fr'),
         put_markdown('---'),
         put_row([
-            put_image(PICS['notice.6.11.png']),
+            put_image(PICS['notice.6.11.png']).style("border-radius:10px"),
             None,
             put_markdown('''## 📢 06月11日15:40临时不停机更新公告
 
@@ -111,7 +73,7 @@ def notice():
         ], size='18fr 1fr 24fr'),
         put_markdown('---'),
         put_row([
-            put_image(PICS['notice.6.10.png']),
+            put_image(PICS['notice.6.10.png']).style("border-radius:10px"),
             None,
             put_markdown('''## 📢 06月10日11:20临时不停机更新公告
 
@@ -125,7 +87,7 @@ def notice():
         ], size='18fr 1fr 24fr'),
         put_markdown('---'),
         put_row([
-            put_image(PICS['notice.6.9.png']),
+            put_image(PICS['notice.6.9.png']).style("border-radius:10px"),
             None,
             put_markdown('''## 📢 06月09日23:45临时不停机更新公告
 
