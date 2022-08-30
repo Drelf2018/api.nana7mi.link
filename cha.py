@@ -58,8 +58,8 @@ async def reload_live(room_info, pos: int = None):
     clear('query_scope')
     with put_loading('border', 'primary'):
         try:
-            session = httpx.AsyncClient(timeout=30.0)
-            resp = await rac(session.get(f'{BASEURL}/live/{room_info["room"]}/{pos}', timeout=20.0))
+            session = httpx.AsyncClient(timeout=50.0)
+            resp = await rac(session.get(f'{BASEURL}/live/{room_info["room"]}/{pos}'))
         except Exception as e:
             put_markdown(f'### 获取弹幕超时 {e}', scope='query_scope')
             return
@@ -107,7 +107,7 @@ async def user(uid: str = ''):
         put_scope('query_scope')
     if uid and uid.isdigit:
         try:
-            resp = await rac(session.get(f'{BASEURL}/uid/{uid}', timeout=20.0))
+            resp = await rac(session.get(f'{BASEURL}/uid/{uid}'))
         except Exception as e:
             toast(f'运行时错误：{e}', 3, color='error')
             return
@@ -129,18 +129,18 @@ async def user(uid: str = ''):
 
 async def lives(roomid: str = ''):
     '直播记录'
-    session = httpx.AsyncClient(timeout=30.0)
+    session = httpx.AsyncClient(timeout=40.0)
     if roomid == '':
         roomid = await get_query('roomid')
         put_scope('query_scope')
     if pos := await get_query('position'):
         with put_loading('border', 'primary'):
-            resp = await rac(session.get(f'{BASEURL}/live/{roomid}/{pos}', timeout=50.0))
+            resp = await rac(session.get(f'{BASEURL}/live/{roomid}/{pos}'))
         js = resp.json()
         if js['status'] == 0:
             await put_danmaku(js['live'], js['live'].pop('danmaku'))
     else:
-        resp = await rac(session.get(f'{BASEURL}/live/{roomid}', timeout=20.0))
+        resp = await rac(session.get(f'{BASEURL}/live/{roomid}'))
         js = resp.json()
         if js['status'] == 0:
             n = len(js['lives']) - 1
@@ -162,7 +162,7 @@ async def index():
     put_scope('query_scope')
     try:
         session = httpx.AsyncClient(timeout=30.0)
-        resp = await rac(session.get(f'{BASEURL}/rooms', timeout=20.0))
+        resp = await rac(session.get(f'{BASEURL}/rooms'))
         js = resp.json()
         if isinstance(js['rooms'], list):
             for room in js['rooms']:
