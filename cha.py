@@ -1,7 +1,6 @@
 ﻿import random
 import time
 from functools import partial
-import json
 import httpx
 import uvicorn
 from fastapi import FastAPI
@@ -11,14 +10,14 @@ from pywebio.input import *
 from pywebio.output import *
 from pywebio.platform.fastapi import webio_routes
 from pywebio.session import run_asyncio_coroutine as rac
-from pywebio.session import run_js, run_async
+from pywebio.session import run_js
 from pywebio_battery import get_query
 import notice
 
 app = FastAPI()
 esu = Image.open('esu.png')  # 查询页面配图
 forever = Image.open('forever.png')  # 私活页面配图
-BASEURL = 'https://api.nana7mi.link'
+BASEURL = 'http://localhost:5762'
 
 def code():
     '打印 python 源码'
@@ -59,7 +58,7 @@ async def reload_live(room_info, pos: int = None):
     clear('query_scope')
     with put_loading('border', 'primary'):
         try:
-            session = httpx.AsyncClient()
+            session = httpx.AsyncClient(timeout=30.0)
             resp = await rac(session.get(f'{BASEURL}/live/{room_info["room"]}/{pos}', timeout=20.0))
         except Exception as e:
             put_markdown(f'### 获取弹幕超时 {e}', scope='query_scope')
@@ -102,7 +101,7 @@ async def onclick(btn):
 
 async def user(uid: str = ''):
     '用户弹幕'
-    session = httpx.AsyncClient()
+    session = httpx.AsyncClient(timeout=30.0)
     if uid == '':
         uid = await get_query('uid')
         put_scope('query_scope')
@@ -130,7 +129,7 @@ async def user(uid: str = ''):
 
 async def lives(roomid: str = ''):
     '直播记录'
-    session = httpx.AsyncClient()
+    session = httpx.AsyncClient(timeout=30.0)
     if roomid == '':
         roomid = await get_query('roomid')
         put_scope('query_scope')
@@ -162,7 +161,7 @@ async def index():
     put_buttons(['😋查发言', '🍜查直播'], onclick=onclick),
     put_scope('query_scope')
     try:
-        session = httpx.AsyncClient()
+        session = httpx.AsyncClient(timeout=30.0)
         resp = await rac(session.get(f'{BASEURL}/rooms', timeout=20.0))
         js = resp.json()
         if isinstance(js['rooms'], list):
