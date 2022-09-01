@@ -29,7 +29,11 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS public.live
     title text COLLATE pg_catalog."default",
     cover text COLLATE pg_catalog."default",
     st bigint,
-    sp bigint
+    sp bigint,
+    total bigint,
+    send_gift double precision,
+    guard_buy double precision,
+    super_chat_message double precision
 )''')
 cursor.execute('''CREATE TABLE IF NOT EXISTS public.data
 (
@@ -100,10 +104,14 @@ class DataBase:
 class DanmuDB(DataBase):
     table = 'danmaku'
 
-    def insert(self, data):
-        sql = 'INSERT INTO danmaku (roomid,time,username,uid,msg,cmd,price,st) VALUES %s;'
-        ex.execute_values(cursor, sql, data)
-        self.save()
+    parse = lambda _, dm: {
+        'time':     dm[0],
+        'username': dm[1],
+        'uid':      dm[2],
+        'msg':      dm[3],
+        'type':     dm[4],
+        'price':    dm[5]
+    }
 
     def query_room(self, roomid: int, start_time: int, stop_time: int = 0):
         flag = False
@@ -111,31 +119,35 @@ class DanmuDB(DataBase):
             stop_time = time.time()
             flag = True
         sql = f'''SELECT time,username,uid,msg,cmd,price FROM danmaku 
-            WHERE roomid = {roomid} AND time >= {start_time} AND time <= {stop_time} 
-            order by time''' + (' desc' if flag else '')
+WHERE roomid = {roomid} AND time >= {start_time} AND time <= {stop_time} 
+order by time''' + (' desc' if flag else '')
         cursor = conn.cursor()
         cursor.execute(sql)
         dms = cursor.fetchall()
-        for dm in dms:
-            yield {'time': dm[0], 'username': dm[1], 'uid': dm[2], 'msg': dm[3], 'type': dm[4], 'price': dm[5]}
+        return [self.parse(dm) for dm in dms]
 
 
 class LiveDB(DataBase):
     table = 'live'
     
+    parse = lambda _, data: {
+        'room':                 data[0],
+        'username':             data[1],
+        'uid':                  data[2],
+        'title':                data[3],
+        'cover':                data[4],
+        'st':                   data[5],
+        'sp':                   data[6],
+        'total':                data[7],
+        'send_gift':            data[8],
+        'guard_buy':            data[9],
+        'super_chat_message':   data[10]
+    }
+
     def update(self, room_id: int, start_time: int, stop_time):
         super().update({'roomid': room_id, 'st': start_time}, SP=stop_time)
 
     def query(self, room_id: int = None, start_time: int = 0, all=False):
-        parse = lambda data: {
-            'room':     data[0],
-            'username': data[1],
-            'uid':      data[2],
-            'title':    data[3],
-            'cover':    data[4],
-            'st':       data[5],
-            'sp':       data[6]
-        }
         params = {'roomid': room_id}
         if start_time:
             params.update({'st': start_time})
@@ -143,17 +155,17 @@ class LiveDB(DataBase):
         if not all:
             if not data:
                 return
-            return parse(data)
+            return self.parse(data)
         else:
             if not data[0]:
                 return
-            return [parse(d) for d in data]
+            return [self.parse(d) for d in data]
 
     def rooms(self):
         table_name = f'tb{int(time.time())}'
         sql = f'''CREATE TEMP TABLE {table_name} as SELECT roomid, MAX(st) FROM live GROUP BY roomid;
 SELECT
-    roomid,cover,username,title,st,sp,uid
+    *
 FROM
     live big
 WHERE
@@ -165,8 +177,7 @@ WHERE
         WHERE
             big.st = {table_name}.max
     )
-ORDER BY sp DESC;
-'''
+ORDER BY sp DESC;'''
         cursor = conn.cursor()
         try:
             cursor.execute(sql)
@@ -174,16 +185,7 @@ ORDER BY sp DESC;
             conn.cursor().execute(f'DROP TABLE {table_name};')
         except Exception as e:
             return str(e)
-        parse = lambda room: {
-            'room':     room[0],
-            'cover':    room[1],
-            'username': room[2],
-            'title':    room[3],
-            'st':       room[4],
-            'sp':       room[5],
-            'uid':      room[6]
-        }
-        return [parse(room) for room in rooms] if rooms else None
+        return [self.parse(room) for room in rooms] if rooms else None
 
 class DataDB(DataBase):
     table = 'data'
