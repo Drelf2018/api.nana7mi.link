@@ -217,7 +217,7 @@ handler.setFormatter(logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-@sched.scheduled_job('interval', hours=1, next_run_time=datetime.datetime.now())
+@sched.scheduled_job('interval', hours=3, next_run_time=datetime.datetime.now())
 def heartbeat():
     BASEURL = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom?room_id={room}'
     for room in liveDB.rooms():
