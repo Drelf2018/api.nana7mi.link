@@ -138,10 +138,10 @@ class LiveDB(DataBase):
         'cover':                data[4],
         'st':                   data[5],
         'sp':                   data[6],
-        'total':                data[7],
-        'send_gift':            data[8],
-        'guard_buy':            data[9],
-        'super_chat_message':   data[10]
+        'total':                data[7] if data[7] else 0,
+        'send_gift':            data[8] if data[8] else 0.0,
+        'guard_buy':            data[9] if data[9] else 0.0,
+        'super_chat_message':   data[10] if data[10] else 0.0
     }
 
     def update(self, room_id: int, start_time: int, stop_time):
