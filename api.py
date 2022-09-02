@@ -107,6 +107,7 @@ async def hello():
             • 访问代码仓库 github.com/Drelf2018/api.nana7mi.link<br/>
             • 阅读 FastAPI 自动生成文档：/docs<br/>
         </p>
+        <p>如果你是来看场报怎么实现的，欢迎访问：<br /> https://github.com/Drelf2018/Nana7miBot/blob/main/plugins/_live2pic.py </p>
     </div>
 </div>
 </body>
