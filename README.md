@@ -24,35 +24,44 @@ _✨ 基于 [pywebio](https://github.com/pywebio/PyWebIO) 以及 [biligo-live-ws
 
 ### 后端
 ```
+# 主要文件
 api.py
 database.py
 ```
-其中 `database.py` 负责读取 `PostgreSQL` 数据库中的弹幕记录。 `api.py` 利用 `FastAPI` 将数据以网络接口形式返回。
+**database.py** 负责读取 **PostgreSQL** 数据库中的弹幕记录。
+
+**api.py** 利用 **FastAPI** 将数据以网络接口形式返回。
 
 #### 如何运行后端
 
-修改 `database.py` 中第 11 行 `conn = psycopg2.connect(...)` 此处应该为本地（或远程）数据库地址。
-
+修改 **database.py** 中第 **11** 行，此处应该为本地（或远程）数据库地址。
+```python
+conn = psycopg2.connect(...)
+```
 参考 [使用python操作postgresql 查询](https://blog.csdn.net/qingfengxd1/article/details/109208027) 。
 
-`api.py` 中第 117 行 `uvicorn.run(app=app, host="0.0.0.0", port=5762)`
-
-表示程序会利用 `uvicorn + FastAPI` 的方式将 api 部署在 `5762` 端口。
-
+注意 **api.py** 中第 **117** 行，表示程序会利用 **Uvicorn + FastAPI** 的方式将 api 部署在 **5762** 端口。
+```python
+uvicorn.run(app=app, host="0.0.0.0", port=5762)
+```
 参考 [python+uvicorn+fastapi (一) - 认识与第一个DEMO](https://www.cnblogs.com/kknote/p/14985301.html)
 
-接着在当前目录使用 `python api.py` 后，打开浏览器访问 `http://localhost:5762` 查看是否有欢迎页面，若有则代表部署成功。
+接着在当前目录运行命令，浏览器访问 [http://localhost:5762](http://localhost:5762) 查看是否有欢迎页面，若有则代表部署成功。
+```python
+python api.py
+```
 
 #### 那么数据从哪来？
 
 [biligo-live-ws-PostgreSQL](https://github.com/Drelf2018/biligo-live-ws-PostgreSQL) 是一个经过改造的弹幕伺服器，原项目 [biligo-live-ws](https://github.com/eric2788/biligo-live-ws) 。
 
-区别在于 `biligo-live-ws-PostgreSQL` 会将弹幕数据记录在 `PostgreSQL` 数据库中，具体使用方法可在 [releases](https://github.com/Drelf2018/biligo-live-ws-PostgreSQL/releases) 界面查看。
+区别在于 **biligo-live-ws-PostgreSQL** 会将弹幕数据记录在 **PostgreSQL** 数据库中，具体使用方法可在 [releases](https://github.com/Drelf2018/biligo-live-ws-PostgreSQL/releases) 界面查看。
 
-_注意，此处用到的数据库需与前文提到的一致。_
+**_注意，此处用到的数据库需与前文提到的一致。_**
 
 ### 前端
 ```
+# 主要文件
 cha.py
 esu.png
 eyes.png
@@ -60,12 +69,17 @@ forever.png
 notice.py
 notice_pic
 ```
-安装 [pywebio](https://github.com/pywebio/PyWebIO) 并使用 `pip install websockets` 安装可能需要的依赖库。
-
+安装 [pywebio](https://github.com/pywebio/PyWebIO) 以及可能需要的依赖库。
+```python
+pip install pywebio
+pip install websockets
+```
 `.png` 是网页中用到的图片资源，`notice.py`、`notice_pic` 是网页中的公告与公告图片。
 
-前端是基本写死了的 `python cha.py` 就能跑，不过应该不需要有人跑这个。
-
+前端是基本写死了的，运行就能跑，不过应该不需要有人跑这个。
+```python
+python cha.py
+```
 你可以访问 [nana7mi.link](https://nana7mi.link) 。
 
 或者利用阿里云函数计算FC部署 [Aliyun-api-nana7mi-link](https://github.com/Drelf2018/Aliyun-api-nana7mi-link) 。
