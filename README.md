@@ -10,9 +10,9 @@ _✨ 基于 [pywebio](https://github.com/pywebio/PyWebIO) 以及 [biligo-live-ws
 
 ## 场报
 
-如果你是看过包含 `数据来源：api.nana7mi.link` 的图片找到这来的，欢迎。不过你要找的可能不在这里。
+如果你是看过包含 **_数据来源：api.nana7mi.link_** 的图片找到这来的，欢迎。不过你要找的可能不在这里。
 
-[_live2pic.py](https://github.com/Drelf2018/Nana7miBot/blob/development/plugins/_live2pic.py) 这个或许是你想要的，利用 `PIL` 将直播数据写入图片。
+[_live2pic.py](https://github.com/Drelf2018/Nana7miBot/blob/main/plugins/_live2pic.py) 这个或许是你想要的，利用 **PIL** 将直播数据写入图片。
 
 里面用到的数据接口是我部署在自己服务器上的后端，可提供使用（别访问太频繁）。
 
